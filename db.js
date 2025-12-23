@@ -2,10 +2,10 @@ import {Pool} from "pg";
 
 const pool = new Pool({
     user: "postgres",
-    host: "172.20.128.53",
-    database:"Git-A-Thon_Database",
-    password:"bvjs@2005",
-    port:5400,
+    host: "172.20.138.7",
+    database:"G-CONNECT",
+    password:"naidu@2005",
+    port:5432,
 });
 
 export default pool;
