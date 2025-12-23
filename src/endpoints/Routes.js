@@ -77,4 +77,25 @@ router.post('/signin', async (req,res)=> {
     }
 });
 
+router.get("/messages", async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT
+        messages.id,
+        messages.message,
+        messages.created_at,
+        users.username
+      FROM messages
+      JOIN users ON users.id = messages.user_id
+      ORDER BY messages.created_at;
+    `);
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ error: "Failed to fetch messages" });
+  }
+});
+
+
 export default router;
