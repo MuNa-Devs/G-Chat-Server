@@ -15,9 +15,9 @@ const io = new Server(server, {
         origin: "*",
     }
 });
+
 io.on("connection", (socket) => {
     console.log(`User connected: ${socket.id}`);
-
     socket.join("global");
 
         socket.on("send_message", async ({ user_id, message }) => {
@@ -49,17 +49,17 @@ app.post('/signup', async (req,res)=>{
     try{
     const {username,email,password}= req.body;
 
-    const result = await pool.query(
-        "INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING *",
-        [username, email, password]
+    // const result = await pool.query(
+    //     "INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING *",
+    //     [username, email, password]
 
-    );
+    // );
 
     console.log(req.body);
     res.json({
         success:true,
         message: "User registered successfully",
-        user: result.rows[0]
+        user: "Sarera"
     })
     
 }
@@ -76,35 +76,35 @@ app.post('/signup', async (req,res)=>{
 
 app.post('/signin', async (req,res)=> {
     try {
-        const { email, password } = req.body;
+        // const { email, password } = req.body;
 
-        const result = await pool.query(
-            "SELECT * FROM users WHERE email = $1 AND password = $2",
-            [email, password]
-        );
+        // const result = await pool.query(
+        //     "SELECT * FROM users WHERE email = $1 AND password = $2",
+        //     [email, password]
+        // );
 
-        // No user found
-        if (result.rows.length === 0) {
-            return res.status(401).json({
-                success: false,
-                message: "Invalid email or password"
-            });
-        }
+        // // No user found
+        // if (result.rows.length === 0) {
+        //     return res.status(401).json({
+        //         success: false,
+        //         message: "Invalid email or password"
+        //     });
+        // }
 
-        // More than one user (rare case)
-        if (result.rows.length > 1) {
-            return res.status(500).json({
-                success: false,
-                message: "Duplicate users found — contact admin"
-            });
-        }
-        console.log(req.body);
+        // // More than one user (rare case)
+        // if (result.rows.length > 1) {
+        //     return res.status(500).json({
+        //         success: false,
+        //         message: "Duplicate users found — contact admin"
+        //     });
+        // }
+        // console.log(req.body);
 
         // Exactly 1 user
         return res.json({
             success: true,
             message: "User logged in successfully",
-            user: result.rows[0]
+            user: "sarera"
         });
 
     } 
