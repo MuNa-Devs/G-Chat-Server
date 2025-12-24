@@ -1,5 +1,7 @@
 import { Server } from 'socket.io';
 
+import pool from '../db.js';
+
 export default function socketSetup(server) {
     const io = new Server(server, {
         cors: {
