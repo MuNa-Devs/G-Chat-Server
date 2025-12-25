@@ -1,8 +1,22 @@
 import express from 'express';
+import multer from 'multer';
+import path from "path";
 
 import pool from '../db.js';
+import { createRoom, roomMembership } from './RouterLogics.js';
 
 const router = express.Router();
+
+const file_storage = multer.diskStorage({
+    destination: "./files",
+    filename: (req, file, cb) => {
+        const extension = path.extname(file.originalname);
+        const file_name = Date.now() + extension;
+        cb(null, file_name);
+    }
+});
+
+const upload = multer({ storage: file_storage });
 
 router.post('/signup', async (req, res) => {
     try {
@@ -62,7 +76,7 @@ router.post('/signin', async (req, res) => {
         return res.json({
             success: true,
             message: "User logged in successfully",
-            user: "sarera"
+            user: result.rows[0]
         });
 
     }
@@ -98,5 +112,24 @@ router.get("/messages", async (req, res) => {
     }
 });
 
+router.post("/rooms/create", upload.single("room_icon"), async (req, res) => {
+    console.log("hi");
+    const body = req.body;
+    const icon = req.file ? req.file : null;
+
+    const data = {
+        ...body,
+        room_icon: icon.filename
+    }
+
+    const r_id = await createRoom(data);
+    const status = await roomMembership(r_id, body.room_aid);
+    
+    res.json({
+        status: status,
+        room_id: r_id,
+        icon_name: data.room_icon
+    });
+});
 
 export default router;
