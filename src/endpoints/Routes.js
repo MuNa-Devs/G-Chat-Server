@@ -96,6 +96,7 @@ router.get("/messages", async (req, res) => {
             `
             SELECT
             messages.id,
+            messages.user_id,
             messages.message,
             messages.created_at,
             users.username
@@ -124,7 +125,7 @@ router.post("/rooms/create", upload.single("room_icon"), async (req, res) => {
 
     const r_id = await createRoom(data);
     const status = await roomMembership(r_id, body.room_aid);
-    
+
     res.json({
         status: status,
         room_id: r_id,
