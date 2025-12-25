@@ -62,7 +62,7 @@ router.post('/signin', async (req, res) => {
         return res.json({
             success: true,
             message: "User logged in successfully",
-            user: "sarera"
+            user: result.rows[0]
         });
 
     }
