@@ -3,7 +3,7 @@ import multer from 'multer';
 import path from "path";
 
 import pool from '../db.js';
-import { createRoom, roomMembership } from './RouterLogics.js';
+import { createRoom, getRooms, roomMembership } from './RouterLogics.js';
 
 const router = express.Router();
 
@@ -131,6 +131,47 @@ router.post("/rooms/create", upload.single("room_icon"), async (req, res) => {
         room_id: r_id,
         icon_name: data.room_icon
     });
+});
+
+router.get("/rooms/get_my_rooms", async (req, res) => {
+    try{
+        const uid = req.query.uid;
+        const rooms_count = req.query.rooms_count;
+        const rooms = await getRooms('my', [parseInt(uid, 10), rooms_count]);
+
+        res.json({
+            status: true,
+            rooms_info: rooms
+        });
+    }
+    catch (err){
+        console.log(err);
+
+        res.json({
+            status: false,
+            message: err
+        });
+    }
+});
+
+router.get("/rooms/get_all_rooms", async (req, res) => {
+    try{
+        const rooms_count = req.query.rooms_count;
+        const rooms = await getRooms('*', parseInt(rooms_count, 10));
+
+        res.json({
+            status: true,
+            rooms_info: rooms
+        });
+    }
+    catch (err){
+        console.log(err);
+
+        res.json({
+            status: false,
+            message: err
+        });
+    }
 });
 
 export default router;

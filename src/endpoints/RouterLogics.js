@@ -48,3 +48,38 @@ export async function roomMembership(r_id, user_id) {
         return false;
     }
 }
+
+export async function getRooms(constraint, vals){
+
+    switch (constraint){
+        case '*':
+            const db_res1 = await pool.query(
+                `
+                SELECT rooms.*, users.username
+                FROM rooms
+                JOIN users ON rooms.r_aid = users.id
+                ORDER BY rooms.r_id DESC
+                LIMIT 20 OFFSET $1
+                `,
+                [vals]
+            );
+            
+            return db_res1.rows;
+
+        case 'my':
+            const db_res2 = await pool.query(
+                `
+                SELECT DISTINCT rooms.*, users.username
+                FROM rooms
+                JOIN users ON rooms.r_aid = users.id
+                LEFT JOIN room_members ON rooms.r_id = room_members.r_id
+                WHERE rooms.r_aid = $1 OR room_members.user_id = $1
+                ORDER BY rooms.r_id DESC
+                LIMIT 20 OFFSET $2
+                `,
+                [vals[0], vals[1]]
+            );
+
+            return db_res2.rows;
+    }
+}
