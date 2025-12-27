@@ -1,5 +1,30 @@
 import pool from "../db.js";
 
+export async function getUserDetails(data){
+    try{
+        const db_res = await pool.query(
+            `
+            SELECT users.id, users.username, users.email, users.is_verified, users.pfp
+            FROM users
+            WHERE users.id = $1
+            `,
+            [data]
+        )
+
+        return db_res.rows[0];
+    }
+    catch (err){
+        console.log(err);
+        return {
+            id: 0,
+            username: '',
+            email: '',
+            is_verified: '',
+            pfp: "#"
+        }
+    }
+}
+
 export async function createRoom(data) {
     try {
         const db_res = await pool.query(

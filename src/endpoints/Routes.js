@@ -3,7 +3,7 @@ import multer from 'multer';
 import path from "path";
 
 import pool from '../db.js';
-import { createRoom, getRooms, roomMembership } from './RouterLogics.js';
+import { createRoom, getRooms, getUserDetails, roomMembership } from './RouterLogics.js';
 
 const router = express.Router();
 
@@ -89,6 +89,28 @@ router.post('/signin', async (req, res) => {
         });
     }
 });
+
+router.get('/get-user', async (req, res) => {
+    try{
+        const user_id = parseInt(req.query.user_id);
+        console.log("returning data for ", user_id);
+        const user_details = await getUserDetails(user_id);
+
+        if (user_details.pfp === null) user_details.pfp = "#";
+
+        res.json({
+            status: true,
+            user_details: user_details
+        });
+    }
+    catch (err){
+        console.log(err);
+        res.json({
+            status: false,
+            message: err
+        });
+    }
+})
 
 router.get("/messages", async (req, res) => {
     try {
