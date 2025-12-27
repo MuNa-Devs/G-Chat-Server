@@ -100,5 +100,22 @@ ORDER BY messages.created_at;
     }
 });
 
+router.get("/search-users", async (req, res) => {
+    const { query } = req.query;
+
+    const result = await pool.query(
+        `
+        SELECT id, username
+        FROM users
+        WHERE username ILIKE $1
+        LIMIT 10
+        `,
+        [`%${query}%`]
+    );
+
+    res.json(result.rows);
+});
+
+
 
 export default router;
