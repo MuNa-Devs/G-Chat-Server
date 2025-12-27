@@ -113,6 +113,22 @@ router.get("/messages", async (req, res) => {
     }
 });
 
+router.get("/search-users", async (req, res) => {
+    const { query } = req.query;
+
+    const result = await pool.query(
+        `
+        SELECT id, username
+        FROM users
+        WHERE username ILIKE $1
+        LIMIT 10
+        `,
+        [`%${query}%`]
+    );
+
+    res.json(result.rows);
+});
+
 router.post("/rooms/create", upload.single("room_icon"), async (req, res) => {
     console.log("hi");
     const body = req.body;
