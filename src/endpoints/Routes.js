@@ -239,4 +239,51 @@ router.get("/rooms/get_all_rooms", async (req, res) => {
     }
 });
 
+router.post("/add-friend", async (req, res) => {
+    const { userId, friendId } = req.body;
+
+    try {
+
+        if (userId === friendId) {
+            return res.status(400).json({ message: "Cannot add yourself" });
+        }
+
+        await pool.query(
+            `INSERT INTO friends (user_id, friend_id)
+             VALUES ($1, $2), ($2, $1)
+             ON CONFLICT DO NOTHING`,
+            [userId, friendId]
+        );
+
+        res.json({ success: true });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Failed to add friend" });
+    }
+});
+
+router.get("/friends/:userId", async (req, res) => {
+    const { userId } = req.params;
+
+    try {
+        const result = await pool.query(
+            `
+            SELECT u.id, u.username
+            FROM friends f
+            JOIN users u ON u.id = f.friend_id
+            WHERE f.user_id = $1
+            ORDER BY u.username
+            `,
+            [userId]
+        );
+
+        res.json(result.rows);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Failed to fetch friends" });
+    }
+});
+
+
+
 export default router;
