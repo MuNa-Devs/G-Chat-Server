@@ -3,7 +3,7 @@ import multer from 'multer';
 import path from "path";
 
 import pool from '../db.js';
-import { createRoom, getRooms, getUserDetails, roomMembership } from './RouterLogics.js';
+import { createRoom, getRooms, getUserDetails, roomMembership, saveUserDetails } from './RouterLogics.js';
 
 const router = express.Router();
 
@@ -90,11 +90,12 @@ router.post('/signin', async (req, res) => {
     }
 });
 
-router.get('/get-user', async (req, res) => {
+router.get('/users/get-user', async (req, res) => {
     try{
         const user_id = parseInt(req.query.user_id);
-        console.log("returning data for ", user_id);
         const user_details = await getUserDetails(user_id);
+
+        console.log(user_details);
 
         res.json({
             status: true,
@@ -109,6 +110,35 @@ router.get('/get-user', async (req, res) => {
         });
     }
 })
+
+router.post("/users/save-details", upload.single("pfp"), async (req, res) => {
+    try{
+        const user_id = req.query.id;
+        const body = req.body;
+        const pfp = req.file ? req.file : null;
+
+        const data = {
+            id: user_id,
+            ...body,
+            pfp: pfp.filename
+        }
+
+        const status = await saveUserDetails(data);
+        console.log(pfp.filename);
+
+        res.json({
+            status: status,
+            pfp: pfp.filename
+        })
+    }
+    catch (err){
+        console.log(err);
+        res.json({
+            status: false,
+            message: err
+        });
+    }
+});
 
 router.get("/messages", async (req, res) => {
     try {
@@ -150,7 +180,6 @@ router.get("/search-users", async (req, res) => {
 });
 
 router.post("/rooms/create", upload.single("room_icon"), async (req, res) => {
-    console.log("hi");
     const body = req.body;
     const icon = req.file ? req.file : null;
 

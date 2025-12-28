@@ -4,7 +4,16 @@ export async function getUserDetails(data){
     try{
         const db_res = await pool.query(
             `
-            SELECT users.id, users.username, users.email, users.is_verified, users.pfp, department
+            SELECT 
+                users.id, 
+                users.username, 
+                users.email, 
+                users.is_verified, 
+                users.pfp, 
+                users.department,
+                users.about,
+                users.phone,
+                users.personal_email
             FROM users
             WHERE users.id = $1
             `,
@@ -20,8 +29,44 @@ export async function getUserDetails(data){
             username: '',
             email: '',
             is_verified: '',
-            pfp: "#"
+            pfp: "#",
+            department: '',
+            about: '',
+            phone: '',
+            personal_email: ''
         }
+    }
+}
+
+export async function saveUserDetails(data){
+    try{
+        const db_res = await pool.query(
+            `
+            UPDATE users
+            SET username = $1,
+                pfp = $2,
+                department = $3,
+                about = $4,
+                phone = $5,
+                personal_email = $6
+            WHERE id = $7
+            `,
+            [
+                data.username, 
+                data.pfp, 
+                data.department, 
+                data.about, 
+                data.phone, 
+                data.email,
+                data.id
+            ]
+        )
+
+        return true;
+    }
+    catch (err){
+        console.log(err);
+        return false;
     }
 }
 
