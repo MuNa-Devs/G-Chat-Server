@@ -284,6 +284,111 @@ router.get("/friends/:userId", async (req, res) => {
     }
 });
 
+router.post("/send-request", async (req, res) => {
+    const { senderId, receiverId } = req.body;
+
+    if (!senderId || !receiverId || senderId === receiverId) {
+        return res.status(400).json({ error: "Invalid request" });
+    }
+
+    try {
+        await pool.query(
+            `
+            INSERT INTO friend_requests (sender_id, receiver_id)
+            VALUES ($1, $2)
+            ON CONFLICT DO NOTHING
+            `,
+            [senderId, receiverId]
+        );
+
+        res.json({ success: true });
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Failed to send request" });
+    }
+});
+
+
+router.get("/requests/received/:userId", async (req, res) => {
+    const { userId } = req.params;
+
+    const result = await pool.query(
+        `
+        SELECT fr.id, u.id AS sender_id, u.username
+        FROM friend_requests fr
+        JOIN users u ON u.id = fr.sender_id
+        WHERE fr.receiver_id = $1 AND fr.status = 'pending'
+        `,
+        [userId]
+    );
+
+    res.json(result.rows);
+});
+
+
+router.get("/requests/sent/:userId", async (req, res) => {
+    const { userId } = req.params;
+
+    const result = await pool.query(
+        `
+        SELECT fr.id, u.id AS receiver_id, u.username, fr.status
+        FROM friend_requests fr
+        JOIN users u ON u.id = fr.receiver_id
+        WHERE fr.sender_id = $1
+        `,
+        [userId]
+    );
+
+    res.json(result.rows);
+});
+
+
+router.post("/accept-request", async (req, res) => {
+    const { requestId } = req.body;
+
+    try {
+        const reqResult = await pool.query(
+            `
+            UPDATE friend_requests
+            SET status = 'accepted'
+            WHERE id = $1
+            RETURNING sender_id, receiver_id
+            `,
+            [requestId]
+        );
+
+        const { sender_id, receiver_id } = reqResult.rows[0];
+
+        await pool.query(
+            `
+            INSERT INTO friends (user_id, friend_id)
+            VALUES ($1, $2), ($2, $1)
+            `,
+            [sender_id, receiver_id]
+        );
+
+        res.json({ success: true });
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Failed to accept request" });
+    }
+});
+
+
+router.post("/reject-request", async (req, res) => {
+    const { requestId } = req.body;
+
+    await pool.query(
+        `UPDATE friend_requests SET status = 'rejected' WHERE id = $1`,
+        [requestId]
+    );
+
+    res.json({ success: true });
+});
+
+
 
 
 export default router;
