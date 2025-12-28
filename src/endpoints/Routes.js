@@ -91,18 +91,16 @@ router.post('/signin', async (req, res) => {
 });
 
 router.get('/users/get-user', async (req, res) => {
-    try{
+    try {
         const user_id = parseInt(req.query.user_id);
         const user_details = await getUserDetails(user_id);
-
-        console.log(user_details);
 
         res.json({
             status: true,
             user_details: user_details
         });
     }
-    catch (err){
+    catch (err) {
         console.log(err);
         res.json({
             status: false,
@@ -112,31 +110,27 @@ router.get('/users/get-user', async (req, res) => {
 })
 
 router.post("/users/save-details", upload.single("pfp"), async (req, res) => {
-    try{
-        const user_id = req.query.id;
+    try {
+        const user_id = Number(req.query.id);
+        if (!Number.isInteger(user_id)) {
+            return res.status(400).json({ status: false, message: "Invalid user id" });
+        }
+
         const body = req.body;
-        const pfp = req.file ? req.file : null;
+        const pfp = req.file?.filename || body.pfp || null;
 
         const data = {
             id: user_id,
             ...body,
-            pfp: pfp.filename
-        }
+            pfp
+        };
 
         const status = await saveUserDetails(data);
-        console.log(pfp.filename);
 
-        res.json({
-            status: status,
-            pfp: pfp.filename
-        })
-    }
-    catch (err){
-        console.log(err);
-        res.json({
-            status: false,
-            message: err
-        });
+        res.json({ status, pfp });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ status: false });
     }
 });
 
@@ -181,11 +175,11 @@ router.get("/search-users", async (req, res) => {
 
 router.post("/rooms/create", upload.single("room_icon"), async (req, res) => {
     const body = req.body;
-    const icon = req.file ? req.file : null;
+    const icon = req.file?.filename || null;
 
     const data = {
         ...body,
-        room_icon: icon.filename
+        room_icon: icon
     }
 
     const r_id = await createRoom(data);
@@ -199,7 +193,7 @@ router.post("/rooms/create", upload.single("room_icon"), async (req, res) => {
 });
 
 router.get("/rooms/get_my_rooms", async (req, res) => {
-    try{
+    try {
         const uid = req.query.uid;
         const rooms_count = req.query.rooms_count;
         const rooms = await getRooms('my', [parseInt(uid, 10), rooms_count]);
@@ -209,7 +203,7 @@ router.get("/rooms/get_my_rooms", async (req, res) => {
             rooms_info: rooms
         });
     }
-    catch (err){
+    catch (err) {
         console.log(err);
 
         res.json({
@@ -220,7 +214,7 @@ router.get("/rooms/get_my_rooms", async (req, res) => {
 });
 
 router.get("/rooms/get_all_rooms", async (req, res) => {
-    try{
+    try {
         const rooms_count = req.query.rooms_count;
         const rooms = await getRooms('*', parseInt(rooms_count, 10));
 
@@ -229,7 +223,7 @@ router.get("/rooms/get_all_rooms", async (req, res) => {
             rooms_info: rooms
         });
     }
-    catch (err){
+    catch (err) {
         console.log(err);
 
         res.json({
@@ -243,7 +237,6 @@ router.post("/add-friend", async (req, res) => {
     const { userId, friendId } = req.body;
 
     try {
-
         if (userId === friendId) {
             return res.status(400).json({ message: "Cannot add yourself" });
         }
