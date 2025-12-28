@@ -96,8 +96,6 @@ router.get('/get-user', async (req, res) => {
         console.log("returning data for ", user_id);
         const user_details = await getUserDetails(user_id);
 
-        if (user_details.pfp === null) user_details.pfp = "#";
-
         res.json({
             status: true,
             user_details: user_details

@@ -4,7 +4,7 @@ export async function getUserDetails(data){
     try{
         const db_res = await pool.query(
             `
-            SELECT users.id, users.username, users.email, users.is_verified, users.pfp
+            SELECT users.id, users.username, users.email, users.is_verified, users.pfp, department
             FROM users
             WHERE users.id = $1
             `,
