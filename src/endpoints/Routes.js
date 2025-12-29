@@ -325,10 +325,12 @@ router.get("/requests/sent/:userId", async (req, res) => {
 
     const result = await pool.query(
         `
-        SELECT fr.id, u.id AS receiver_id, u.username, fr.status
+        SELECT fr.id, u.id AS receiver_id, u.username
         FROM friend_requests fr
         JOIN users u ON u.id = fr.receiver_id
         WHERE fr.sender_id = $1
+          AND fr.status = 'pending'
+        ORDER BY fr.id DESC
         `,
         [userId]
     );
@@ -337,49 +339,86 @@ router.get("/requests/sent/:userId", async (req, res) => {
 });
 
 
+
 router.post("/accept-request", async (req, res) => {
-    const { requestId } = req.body;
+    const { requestId, userId } = req.body; // receiver id
+
+    const client = await pool.connect();
 
     try {
-        const reqResult = await pool.query(
+        await client.query("BEGIN");
+
+        // 1️⃣ validate request
+        const result = await client.query(
             `
             UPDATE friend_requests
             SET status = 'accepted'
             WHERE id = $1
+              AND receiver_id = $2
+              AND status = 'pending'
             RETURNING sender_id, receiver_id
             `,
-            [requestId]
+            [requestId, userId]
         );
 
-        const { sender_id, receiver_id } = reqResult.rows[0];
+        if (result.rowCount === 0) {
+            await client.query("ROLLBACK");
+            return res.status(400).json({ message: "Invalid request" });
+        }
 
-        await pool.query(
+        const { sender_id, receiver_id } = result.rows[0];
+
+        // 2️⃣ insert friends (both directions)
+        await client.query(
             `
             INSERT INTO friends (user_id, friend_id)
             VALUES ($1, $2), ($2, $1)
+            ON CONFLICT DO NOTHING
             `,
             [sender_id, receiver_id]
         );
 
+        await client.query("COMMIT");
+
         res.json({ success: true });
 
     } catch (err) {
+        await client.query("ROLLBACK");
         console.error(err);
         res.status(500).json({ error: "Failed to accept request" });
+    } finally {
+        client.release();
     }
 });
 
 
 router.post("/reject-request", async (req, res) => {
-    const { requestId } = req.body;
+    const { requestId, userId } = req.body;
 
-    await pool.query(
-        `UPDATE friend_requests SET status = 'rejected' WHERE id = $1`,
-        [requestId]
-    );
+    try {
+        const result = await pool.query(
+            `
+            UPDATE friend_requests
+            SET status = 'rejected'
+            WHERE id = $1
+              AND receiver_id = $2
+              AND status = 'pending'
+            `,
+            [requestId, userId]
+        );
 
-    res.json({ success: true });
+        if (result.rowCount === 0) {
+            return res.status(400).json({ message: "Invalid request" });
+        }
+
+        res.json({ success: true });
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Failed to reject request" });
+    }
 });
+
 
 
 
