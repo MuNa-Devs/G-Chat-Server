@@ -75,8 +75,8 @@ export async function createRoom(data) {
         const db_res = await pool.query(
             `
                 INSERT INTO rooms
-                (r_name, r_desc, r_aid, r_size, r_type, join_pref, icon_url)
-                VALUES ($1, $2, $3, $4, $5, $6, $7)
+                (r_name, r_desc, r_aid, r_size, popl_size, r_type, join_pref, icon_url)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
                 RETURNING *
             `,
             [
@@ -84,6 +84,7 @@ export async function createRoom(data) {
                 data.room_desc,
                 data.room_aid,
                 data.room_size,
+                1,
                 data.room_type,
                 data.join_pref,
                 data.room_icon
@@ -151,5 +152,31 @@ export async function getRooms(constraint, vals){
             );
 
             return db_res2.rows;
+
+        case 'a':
+            const db_res3 = await pool.query(
+                `
+                SELECT rooms.*, users.username AS admin_name
+                FROM rooms
+                JOIN users ON rooms.r_aid = users.id
+                WHERE rooms.r_id = $1
+                `,
+                [vals]
+            );
+
+            return db_res3.rows[0];
     }
+}
+
+export async function isRoomMember(room_id, user_id){
+    const db_res = await pool.query(
+        `
+        SELECT room_members.r_id
+        FROM room_members
+        WHERE room_members.r_id = $1 AND room_members.user_id = $2
+        `,
+        [room_id, user_id]
+    );
+
+    return ! db_res.rowCount == 0;
 }

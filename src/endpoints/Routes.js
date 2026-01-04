@@ -3,7 +3,14 @@ import multer from 'multer';
 import path from "path";
 
 import pool from '../db.js';
-import { createRoom, getRooms, getUserDetails, roomMembership, saveUserDetails } from './RouterLogics.js';
+import { 
+    createRoom, 
+    getRooms, 
+    getUserDetails, 
+    isRoomMember, 
+    roomMembership, 
+    saveUserDetails 
+} from './RouterLogics.js';
 
 const router = express.Router();
 
@@ -176,20 +183,58 @@ router.get("/search-users", async (req, res) => {
 router.post("/rooms/create", upload.single("room_icon"), async (req, res) => {
     const body = req.body;
     const icon = req.file?.filename || null;
-
+    
     const data = {
         ...body,
         room_icon: icon
     }
-
+    
     const r_id = await createRoom(data);
     const status = await roomMembership(r_id, body.room_aid);
-
+    
     res.json({
         status: status,
         room_id: r_id,
         icon_name: data.room_icon
     });
+});
+
+router.get("/rooms/is_member", async (req, res) => {
+    
+    try{
+        const r_id = req.query.room_id;
+        const u_id = req.query.user_id;
+
+        res.json({
+            status: true,
+            is_member: await isRoomMember(r_id, u_id)
+        });
+    }
+    catch(err){
+        console.log(err);
+        res.json({
+            status: false,
+            message: err
+        });
+    }
+});
+
+router.get("/rooms/get-room", async (req, res) => {
+    try{
+        const room_id = req.query.room_id;
+
+        res.json({
+            status: true,
+            room_info: await getRooms('a', room_id)
+        });
+    }
+    catch(err){
+        console.log(err);
+        res.json({
+            status: false,
+            message: err
+        });
+    }
 });
 
 router.get("/rooms/get_my_rooms", async (req, res) => {
@@ -226,6 +271,25 @@ router.get("/rooms/get_all_rooms", async (req, res) => {
     catch (err) {
         console.log(err);
 
+        res.json({
+            status: false,
+            message: err
+        });
+    }
+});
+
+router.get("/rooms/is_member", async (req, res) => {
+    try{
+        const user_id = req.query.user_id;
+        const room_id = req.query.room_id;
+
+        res.json({
+            status: true,
+            is_member: await isRoomMember(user_id, room_id)
+        });
+    }
+    catch (err){
+        console.log(err);
         res.json({
             status: false,
             message: err
