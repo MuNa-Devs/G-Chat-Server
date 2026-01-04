@@ -156,7 +156,7 @@ export async function getRooms(constraint, vals){
         case 'a':
             const db_res3 = await pool.query(
                 `
-                SELECT rooms.*, users.username AS admin_name
+                SELECT rooms.*, users.username AS admin_name, users.*
                 FROM rooms
                 JOIN users ON rooms.r_aid = users.id
                 WHERE rooms.r_id = $1
@@ -179,4 +179,20 @@ export async function isRoomMember(room_id, user_id){
     );
 
     return ! db_res.rowCount == 0;
+}
+
+export async function getRoomMembers(room_id){
+    const db_res = await pool.query(
+        `
+        SELECT DISTINCT users.*
+        FROM room_members
+        JOIN users ON room_members.user_id = users.id
+        WHERE room_members.r_id = $1
+        `,
+        [room_id]
+    );
+
+    console.log(db_res.rows);
+
+    return db_res.rows
 }

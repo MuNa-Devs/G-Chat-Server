@@ -5,6 +5,7 @@ import path from "path";
 import pool from '../db.js';
 import { 
     createRoom, 
+    getRoomMembers, 
     getRooms, 
     getUserDetails, 
     isRoomMember, 
@@ -286,6 +287,24 @@ router.get("/rooms/is_member", async (req, res) => {
         res.json({
             status: true,
             is_member: await isRoomMember(user_id, room_id)
+        });
+    }
+    catch (err){
+        console.log(err);
+        res.json({
+            status: false,
+            message: err
+        });
+    }
+});
+
+router.get("/rooms/get-members", async (req, res) => {
+    try{
+        const r_id = parseInt(req.query.room_id);
+
+        res.json({
+            status: true,
+            members: await getRoomMembers(r_id)
         });
     }
     catch (err){
