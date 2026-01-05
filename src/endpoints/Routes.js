@@ -316,6 +316,25 @@ router.get("/rooms/get-members", async (req, res) => {
     }
 });
 
+router.get("/rooms/join", async (req, res) => {
+    try{
+        const r_id = req.query.room_id;
+        const u_id = req.query.user_id;
+
+        res.json({
+            status: true,
+            join_status: await roomMembership(r_id, u_id)
+        });
+    }
+    catch (err){
+        console.log(err);
+        res.json({
+            status: false,
+            message: err
+        });
+    }
+})
+
 router.post("/add-friend", async (req, res) => {
     const { userId, friendId } = req.body;
 

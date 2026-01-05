@@ -84,7 +84,7 @@ export async function createRoom(data) {
                 data.room_desc,
                 data.room_aid,
                 data.room_size,
-                1,
+                0,
                 data.room_type,
                 data.join_pref,
                 data.room_icon
@@ -102,6 +102,15 @@ export async function createRoom(data) {
 
 export async function roomMembership(r_id, user_id) {
     try {
+        const popl_size = await pool.query(
+            `
+            UPDATE rooms
+            SET popl_size = popl_size + 1
+            WHERE r_id = $1
+            `,
+            [r_id]
+        );
+
         const db_res = await pool.query(
             `
             INSERT INTO room_members
