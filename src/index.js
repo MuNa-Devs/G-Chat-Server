@@ -5,7 +5,7 @@ import path from 'path';
 import getIP from './get_my_ip.js';
 
 import router from './endpoints/Routes.js';
-import socketSetup from './sockets/global_chat.js';
+import socketSetup from './sockets/socket_comm.js';
 
 const ip = getIP();
 const app = express();
