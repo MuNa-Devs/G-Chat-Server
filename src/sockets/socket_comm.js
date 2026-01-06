@@ -41,6 +41,7 @@ export default function socketSetup(server) {
                 time: new Date()
             });
         });
+
         socket.on("disconnect", () => {
             console.log(`User disconnected: ${socket.id}`);
             user_socket_map.delete(client_id);

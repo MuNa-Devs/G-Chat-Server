@@ -9,7 +9,8 @@ import {
     getRooms, 
     getUserDetails, 
     isRoomMember, 
-    roomMembership, 
+    roomMembership,
+    roomDisMembership, 
     saveUserDetails 
 } from './RouterLogics.js';
 
@@ -324,6 +325,25 @@ router.get("/rooms/join", async (req, res) => {
         res.json({
             status: true,
             join_status: await roomMembership(r_id, u_id)
+        });
+    }
+    catch (err){
+        console.log(err);
+        res.json({
+            status: false,
+            message: err
+        });
+    }
+})
+
+router.get("/rooms/leave", async (req, res) => {
+    try{
+        const r_id = req.query.room_id;
+        const u_id = req.query.user_id;
+
+        res.json({
+            status: true,
+            join_status: await roomDisMembership(r_id, u_id)
         });
     }
     catch (err){

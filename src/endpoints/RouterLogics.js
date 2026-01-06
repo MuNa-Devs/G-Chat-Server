@@ -129,6 +129,34 @@ export async function roomMembership(r_id, user_id) {
     }
 }
 
+export async function roomDisMembership(r_id, user_id) {
+    try {
+        const popl_size = await pool.query(
+            `
+            UPDATE rooms
+            SET popl_size = popl_size - 1
+            WHERE r_id = $1
+            `,
+            [r_id]
+        );
+
+        const db_res = await pool.query(
+            `
+            DELETE FROM room_members
+            WHERE room_members.r_id = $1
+            AND room_members.user_id = $2
+            `,
+            [r_id, user_id]
+        );
+
+        return true;
+    }
+    catch(err){
+        console.log(err);
+        return false;
+    }
+}
+
 export async function getRooms(constraint, vals){
 
     switch (constraint){
