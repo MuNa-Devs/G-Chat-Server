@@ -28,17 +28,18 @@ export default function socketSetup(server) {
             );
 
             const username = userResult.rows[0].username;
+            const date_now = new Date();
 
             await pool.query(
-                "INSERT INTO messages (user_id, message) VALUES ($1, $2)",
-                [user_id, message]
+                "INSERT INTO messages (user_id, message, created_at) VALUES ($1, $2, $3)",
+                [user_id, message, date_now]
             );
 
             io.to("global").emit("receive_message", {
                 user_id,
                 username,
                 message,
-                time: new Date()
+                time: date_now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             });
         });
 
