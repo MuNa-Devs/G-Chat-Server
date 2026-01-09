@@ -100,6 +100,26 @@ export async function createRoom(data) {
     }
 }
 
+export async function getRoomMessages(r_id){
+    try{
+        const db_res = await pool.query(
+            `
+            SELECT * FROM room_messages
+            JOIN users ON room_messages.user_id = users.id
+            WHERE room_messages.r_id = $1
+            LIMIT 100
+            `,
+            [r_id]
+        );
+
+        return db_res.rows;
+    }
+    catch(err){
+        console.log(err);
+        return [];
+    }
+}
+
 export async function roomMembership(r_id, user_id) {
     try {
         const popl_size = await pool.query(

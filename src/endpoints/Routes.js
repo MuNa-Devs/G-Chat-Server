@@ -11,7 +11,8 @@ import {
     isRoomMember, 
     roomMembership,
     roomDisMembership, 
-    saveUserDetails 
+    saveUserDetails, 
+    getRoomMessages
 } from './RouterLogics.js';
 
 const router = express.Router();
@@ -26,6 +27,8 @@ const file_storage = multer.diskStorage({
 });
 
 const upload = multer({ storage: file_storage });
+
+router.get('/ping', (req, res) => res.json({status: true}));
 
 router.post('/signup', async (req, res) => {
     try {
@@ -165,6 +168,21 @@ router.get("/messages", async (req, res) => {
         res.status(500).json({ error: "Failed to fetch messages" });
     }
 });
+
+router.get("/rooms/get-messages", async (req, res) => {
+    try{
+        res.json({
+            status: true,
+            messages: await getRoomMessages(parseInt(req.query.room_id))
+        });
+    }
+    catch{
+        res.json({
+            status: false,
+            message: err
+        });
+    }
+})
 
 router.get("/search-users", async (req, res) => {
     const { query } = req.query;

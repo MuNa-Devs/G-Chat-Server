@@ -1,6 +1,8 @@
 import { Server } from 'socket.io';
 
 import pool from '../db.js';
+import { saveMessage } from './socket_logics.js';
+import { getUserDetails } from '../endpoints/RouterLogics.js';
 
 export const user_socket_map = new Map();
 
@@ -19,7 +21,24 @@ export default function socketSetup(server) {
         socket.on("register-client", async ({user_id}) => {
             client_id = user_id;
             user_socket_map.set(user_id, socket.id);
-        })
+        });
+
+        socket.on("join-room", async ({room_id}) => {
+            socket.join(room_id);
+        });
+
+        socket.on("send-room-message", async ({user_id, room_id, message}) => {
+            const sent_at = new Date();
+            saveMessage(user_id, room_id, message, sent_at);
+
+            socket.to(room_id).emit("get-room-message", {
+                r_id: room_id,
+                user_id: user_id,
+                sender_details: await getUserDetails(user_id),
+                message: message, 
+                sent_at: sent_at
+            });
+        });
 
         socket.on("send_message", async ({ user_id, message }) => {
             const userResult = await pool.query(

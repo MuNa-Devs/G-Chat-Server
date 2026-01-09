@@ -10,7 +10,9 @@ import socketSetup from './sockets/socket_comm.js';
 const ip = getIP();
 const app = express();
 
-app.use(cors());
+app.use(cors({
+    origin: '*'
+}));
 app.use(express.json());
 app.use("/g-chat", router);
 app.use("/files", express.static(path.join(process.cwd(), "files")));
