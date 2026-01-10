@@ -27,6 +27,10 @@ export default function socketSetup(server) {
             socket.join(room_id);
         });
 
+        socket.on("leave-room", async ({room_id}) => {
+            socket.leave(room_id);
+        })
+
         socket.on("send-room-message", async ({user_id, room_id, message}) => {
             const sent_at = new Date();
             saveMessage(user_id, room_id, message, sent_at);
