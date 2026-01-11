@@ -23,6 +23,7 @@ export async function saveDirectMessage(contact_id, message, sent_by, sent_at){
         const db_res = await pool.query(
             `
             INSERT INTO direct_messages
+            (contact_id, message, sent_by, sent_at)
             VALUES ($1, $2, $3, $4)
             `,
             [contact_id, message, sent_by, sent_at]
