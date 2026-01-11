@@ -1,7 +1,7 @@
 import { Server } from 'socket.io';
 
 import pool from '../db.js';
-import { saveMessage } from './socket_logics.js';
+import { saveDirectMessage, saveRoomMessage } from './socket_logics.js';
 import { getUserDetails } from '../endpoints/RouterLogics.js';
 
 export const user_socket_map = new Map();
@@ -33,7 +33,7 @@ export default function socketSetup(server) {
 
         socket.on("send-room-message", async ({user_id, room_id, message}) => {
             const sent_at = new Date();
-            saveMessage(user_id, room_id, message, sent_at);
+            saveRoomMessage(user_id, room_id, message, sent_at);
 
             socket.to(room_id).emit("get-room-message", {
                 r_id: room_id,
@@ -42,6 +42,25 @@ export default function socketSetup(server) {
                 message: message, 
                 sent_at: sent_at
             });
+        });
+
+        socket.on("connect-dm", async ({contact_id}) => {
+            socket.join(contact_id);
+        });
+
+        socket.on("disconnect_id", async ({contact_id}) => {
+            socket.leave(contact_id);
+        });
+
+        socket.on("send-dm", async ({
+            contact_id,
+            message,
+            sent_by,
+            sent_at,
+            message_details
+        }) => {
+            saveDirectMessage(contact_id, message, sent_by, sent_at);
+            socket.to(contact_id).emit("get-dm", message_details);
         });
 
         socket.on("send_message", async ({ user_id, message }) => {

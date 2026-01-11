@@ -1,8 +1,8 @@
 import pool from "../db.js";
 
-export function saveMessage(uid, rid, msg, time){
+export async function saveRoomMessage(uid, rid, msg, time){
     try{
-        const db_res = pool.query(
+        const db_res = await pool.query(
             `
             INSERT INTO room_messages
             VALUES ($1, $2, $3, $4)
@@ -14,6 +14,24 @@ export function saveMessage(uid, rid, msg, time){
     }
     catch (err){
         console.log(err)
+        return false;
+    }
+}
+
+export async function saveDirectMessage(contact_id, message, sent_by, sent_at){
+    try{
+        const db_res = await pool.query(
+            `
+            INSERT INTO direct_messages
+            VALUES ($1, $2, $3, $4)
+            `,
+            [contact_id, message, sent_by, sent_at]
+        );
+
+        return true;
+    }
+    catch (err){
+        console.log(err);
         return false;
     }
 }

@@ -253,3 +253,74 @@ export async function getRoomMembers(room_id){
 
     return db_res.rows
 }
+
+export async function getUserContacts(user_id){
+    try{
+        const db_res = await pool.query(
+            `
+            SELECT DISTINCT ON (c.contact_id)
+                c.contact_id,
+                CASE
+                    WHEN c.person1 = $1 THEN c.person2
+                    ELSE c.person1
+                END AS other_id,
+
+                dm.message AS recent_message,
+                dm.sent_by,
+                dm.sent_at,
+                u.username,
+                u.pfp
+
+            FROM contacts c
+
+            LEFT JOIN direct_messages dm
+            ON dm.contact_id = c.contact_id
+
+            JOIN users u
+            ON u.id = CASE
+                WHEN c.person1 = $1 THEN c.person2
+                ELSE c.person1
+            END
+
+            WHERE c.person1 = $1
+            OR c.person2 = $1
+
+            ORDER BY c.contact_id, dm.sent_at DESC;
+            `,
+            [user_id]
+        );
+
+        console.log(db_res.rows);
+        return db_res.rows;
+    }
+    catch (err){
+        console.log(err);
+        return [];
+    }
+}
+
+export async function getUserChats(contact_id){
+    try{
+        const db_res = await pool.query(
+            `
+            SELECT
+                direct_messages.*,
+                users.username,
+                users.pfp
+            FROM direct_messages
+
+            JOIN users ON direct_messages.sent_by = users.id
+
+            WHERE direct_messages.contact_id = $1
+            `,
+            [contact_id]
+        );
+
+        console.log(db_res.rows);
+        return db_res.rows;
+    }
+    catch (err){
+        console.log(err);
+        return [];
+    }
+}

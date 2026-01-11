@@ -12,7 +12,9 @@ import {
     roomMembership,
     roomDisMembership, 
     saveUserDetails, 
-    getRoomMessages
+    getRoomMessages,
+    getUserContacts,
+    getUserChats
 } from './RouterLogics.js';
 
 const router = express.Router();
@@ -559,8 +561,41 @@ router.post("/reject-request", async (req, res) => {
     }
 });
 
+router.get("/dms/get-contacts", async (req, res) => {
+    try{
+        const user_id = req.query.user_id;
 
+        res.json({
+            status: true,
+            contacts: await getUserContacts(user_id)
+        });
+    }
+    catch(err){
+        res.json({
+            status: false,
+            message: err
+        });
 
+        console.log(err);
+    }
+});
 
+router.get("/dms/get-chats", async (req, res) => {
+    try{
+        const contact_id = req.query.contact_id;
+
+        res.json({
+            status: true,
+            chats: await getUserChats(contact_id)
+        });
+    }
+    catch (err){
+        res.json({
+            status: false,
+            message: err
+        });
+        console.log(err);
+    }
+})
 
 export default router;
