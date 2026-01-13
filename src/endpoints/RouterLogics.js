@@ -100,6 +100,36 @@ export async function createRoom(data) {
     }
 }
 
+export async function getsearchedRooms(search_query, offset){
+    try{
+        const search_string1 = `%${search_query}`;
+        const search_string2 = `${search_query}%`;
+        const search_string3 = `%${search_query}%`;
+
+        const db_res = await pool.query(
+            `
+            SELECT rooms.*, users.username
+            FROM rooms
+            JOIN users ON rooms.r_aid = users.id
+            WHERE
+                rooms.r_name ILIKE $1 
+                OR 
+                rooms.r_name ILIKE $2 
+                OR 
+                rooms.r_name ILIKE $3
+            LIMIT 20 OFFSET $4;
+            `,
+            [search_string1, search_string2, search_string3, offset]
+        );
+
+        return db_res.rows;
+    }
+    catch (err){
+        console.log(err);
+        return [];
+    }
+}
+
 export async function getRoomMessages(r_id){
     try{
         const db_res = await pool.query(
@@ -107,7 +137,8 @@ export async function getRoomMessages(r_id){
             SELECT * FROM room_messages
             JOIN users ON room_messages.user_id = users.id
             WHERE room_messages.r_id = $1
-            LIMIT 100
+            ORDER BY room_messages.sent_at ASC
+            LIMIT 100;
             `,
             [r_id]
         );
@@ -186,6 +217,7 @@ export async function getRooms(constraint, vals){
                 SELECT rooms.*, users.username
                 FROM rooms
                 JOIN users ON rooms.r_aid = users.id
+                WHERE rooms.r_type = 'public'
                 ORDER BY rooms.r_id DESC
                 LIMIT 20 OFFSET $1
                 `,
@@ -249,8 +281,6 @@ export async function getRoomMembers(room_id){
         [room_id]
     );
 
-    console.log(db_res.rows);
-
     return db_res.rows
 }
 
@@ -290,7 +320,6 @@ export async function getUserContacts(user_id){
             [user_id]
         );
 
-        console.log(db_res.rows);
         return db_res.rows;
     }
     catch (err){
@@ -316,7 +345,6 @@ export async function getUserChats(contact_id){
             [contact_id]
         );
 
-        console.log(db_res.rows);
         return db_res.rows;
     }
     catch (err){

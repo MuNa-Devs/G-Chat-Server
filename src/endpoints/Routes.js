@@ -14,7 +14,8 @@ import {
     saveUserDetails, 
     getRoomMessages,
     getUserContacts,
-    getUserChats
+    getUserChats,
+    getsearchedRooms
 } from './RouterLogics.js';
 
 const router = express.Router();
@@ -51,7 +52,7 @@ router.post('/signup', async (req, res) => {
 
     }
     catch (err) {
-        console.error(err.message);
+        console.error(err);
 
         res.status(500).json({
             success: false,
@@ -171,6 +172,29 @@ router.get("/messages", async (req, res) => {
     }
 });
 
+router.get("/rooms/search-rooms", async (req, res) => {
+    try{
+        const search_query = req.query.search_query;
+        
+        res.on("close", () => {
+            console.log("Search ended");
+            return;
+        });
+        
+        res.json({
+            status: true,
+            rooms_info: await getsearchedRooms(search_query.toLowerCase())
+        });
+    }
+    catch (err){
+        console.log(err);
+        res.json({
+            status: false,
+            message: err
+        });
+    }
+})
+
 router.get("/rooms/get-messages", async (req, res) => {
     try{
         res.json({
@@ -283,7 +307,7 @@ router.get("/rooms/get_my_rooms", async (req, res) => {
 router.get("/rooms/get_all_rooms", async (req, res) => {
     try {
         const rooms_count = req.query.rooms_count;
-        const rooms = await getRooms('*', parseInt(rooms_count, 10));
+        const rooms = await getRooms('*', Number(rooms_count));
 
         res.json({
             status: true,
