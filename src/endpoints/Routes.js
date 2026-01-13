@@ -14,7 +14,8 @@ import {
     saveUserDetails, 
     getRoomMessages,
     getUserContacts,
-    getUserChats
+    getUserChats,
+    getsearchedRooms
 } from './RouterLogics.js';
 
 const router = express.Router();
@@ -170,6 +171,29 @@ router.get("/messages", async (req, res) => {
         res.status(500).json({ error: "Failed to fetch messages" });
     }
 });
+
+router.get("/rooms/search-rooms", async (req, res) => {
+    try{
+        const search_query = req.query.search_query;
+        
+        res.on("close", () => {
+            console.log("Search ended");
+            return;
+        });
+        
+        res.json({
+            status: true,
+            rooms_info: await getsearchedRooms(search_query.toLowerCase())
+        });
+    }
+    catch (err){
+        console.log(err);
+        res.json({
+            status: false,
+            message: err
+        });
+    }
+})
 
 router.get("/rooms/get-messages", async (req, res) => {
     try{
