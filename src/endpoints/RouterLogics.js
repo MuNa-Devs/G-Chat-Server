@@ -186,6 +186,7 @@ export async function getRooms(constraint, vals){
                 SELECT rooms.*, users.username
                 FROM rooms
                 JOIN users ON rooms.r_aid = users.id
+                WHERE rooms.r_type = 'public'
                 ORDER BY rooms.r_id DESC
                 LIMIT 20 OFFSET $1
                 `,
@@ -249,8 +250,6 @@ export async function getRoomMembers(room_id){
         [room_id]
     );
 
-    console.log(db_res.rows);
-
     return db_res.rows
 }
 
@@ -290,7 +289,6 @@ export async function getUserContacts(user_id){
             [user_id]
         );
 
-        console.log(db_res.rows);
         return db_res.rows;
     }
     catch (err){
@@ -315,8 +313,7 @@ export async function getUserChats(contact_id){
             `,
             [contact_id]
         );
-
-        console.log(db_res.rows);
+        
         return db_res.rows;
     }
     catch (err){

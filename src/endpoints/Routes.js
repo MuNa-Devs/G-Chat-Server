@@ -51,7 +51,7 @@ router.post('/signup', async (req, res) => {
 
     }
     catch (err) {
-        console.error(err.message);
+        console.error(err);
 
         res.status(500).json({
             success: false,
@@ -283,7 +283,7 @@ router.get("/rooms/get_my_rooms", async (req, res) => {
 router.get("/rooms/get_all_rooms", async (req, res) => {
     try {
         const rooms_count = req.query.rooms_count;
-        const rooms = await getRooms('*', parseInt(rooms_count, 10));
+        const rooms = await getRooms('*', Number(rooms_count));
 
         res.json({
             status: true,
