@@ -646,5 +646,30 @@ router.get("/users/:id/profile", async (req, res) => {
     }
 });
 
+router.post("/remove-friend", async (req, res) => {
+    const { userId, friendId } = req.body;
+
+    if (!userId || !friendId) {
+        return res.status(400).json({ error: "Missing ids" });
+    }
+
+    try {
+        await pool.query(
+            `
+            DELETE FROM friends
+            WHERE (user_id = $1 AND friend_id = $2)
+               OR (user_id = $2 AND friend_id = $1)
+            `,
+            [userId, friendId]
+        );
+
+        res.json({ success: true });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Failed to remove friend" });
+    }
+});
+
+
 
 export default router;
