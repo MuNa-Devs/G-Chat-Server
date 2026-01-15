@@ -210,6 +210,20 @@ router.get("/rooms/get-messages", async (req, res) => {
     }
 })
 
+router.post("/rooms/room-message", upload.array("files"), async (req, res) => {
+    try{
+        const files = req.files;
+        const data = req.body;
+        console.log(data);
+    }
+    catch (err){
+        res.json({
+            status: true,
+            message: err
+        });
+    }
+})
+
 router.get("/search-users", async (req, res) => {
     const { query } = req.query;
 
