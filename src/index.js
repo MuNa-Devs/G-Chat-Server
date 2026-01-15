@@ -19,7 +19,7 @@ app.use("/files", express.static(path.join(process.cwd(), "files")));
 
 const server = http.createServer(app);
 
-socketSetup(server);
+const io = socketSetup(server);
 
 server.listen(5500, "0.0.0.0", () => {
     console.log("Backend running on LAN");

@@ -151,6 +151,45 @@ export async function getRoomMessages(r_id){
     }
 }
 
+export async function saveRoomMessage(message, files){
+    try{
+        const db_res = await pool.query(
+            `
+            INSERT INTO room_messages (r_id, user_id, message, sent_at)
+                VALUES ($1, $2, $3, $4)
+            RETURNING room_messages.message_id;
+            `,
+            [
+                message.room_id, 
+                message.user_id, 
+                message.message, 
+                message.timestamp
+            ]
+        );
+
+        const message_id = db_res.rows[0].message_id;
+
+        files.forEach(async (file) => {
+            await pool.query(
+                `
+                INSERT INTO room_message_files (message_id, filename, file_url, mime_type)
+                    VALUES ($1, $2, $3, $4)
+                `,
+                [
+                    message_id,
+                    file.originalname,
+                    file.filename,
+                    file.mimetype
+                ]
+            );
+        });
+    }
+    catch (err){
+        console.log(err);
+        return false;
+    }
+}
+
 export async function roomMembership(r_id, user_id) {
     try {
         const popl_size = await pool.query(

@@ -4,6 +4,7 @@ import pool from '../db.js';
 import { saveDirectMessage, saveRoomMessage } from './socket_logics.js';
 import { getUserDetails } from '../endpoints/RouterLogics.js';
 
+export let reusable_io = null;
 export const user_socket_map = new Map();
 
 export default function socketSetup(server) {
@@ -14,7 +15,6 @@ export default function socketSetup(server) {
     });
 
     io.on("connection", (socket) => {
-        console.log(`User connected: ${socket.id}`);
         socket.join("global");
         let client_id;
 
@@ -86,8 +86,11 @@ export default function socketSetup(server) {
         });
 
         socket.on("disconnect", () => {
-            console.log(`User disconnected: ${socket.id}`);
             user_socket_map.delete(client_id);
         });
     });
+
+    reusable_io = io;
+
+    return io;
 }

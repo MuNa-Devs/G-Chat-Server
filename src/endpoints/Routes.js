@@ -3,20 +3,22 @@ import multer from 'multer';
 import path from "path";
 
 import pool from '../db.js';
-import { 
-    createRoom, 
-    getRoomMembers, 
-    getRooms, 
-    getUserDetails, 
-    isRoomMember, 
+import {
+    createRoom,
+    getRoomMembers,
+    getRooms,
+    getUserDetails,
+    isRoomMember,
     roomMembership,
-    roomDisMembership, 
-    saveUserDetails, 
+    roomDisMembership,
+    saveUserDetails,
     getRoomMessages,
     getUserContacts,
     getUserChats,
-    getsearchedRooms
+    getsearchedRooms,
+    saveRoomMessage
 } from './RouterLogics.js';
+import { reusable_io, user_socket_map } from '../sockets/socket_comm.js';
 
 const router = express.Router();
 
@@ -31,7 +33,7 @@ const file_storage = multer.diskStorage({
 
 const upload = multer({ storage: file_storage });
 
-router.get('/ping', (req, res) => res.json({status: true}));
+router.get('/ping', (req, res) => res.json({ status: true }));
 
 router.post('/signup', async (req, res) => {
     try {
@@ -173,20 +175,20 @@ router.get("/messages", async (req, res) => {
 });
 
 router.get("/rooms/search-rooms", async (req, res) => {
-    try{
+    try {
         const search_query = req.query.search_query;
-        
+
         res.on("close", () => {
             console.log("Search ended");
             return;
         });
-        
+
         res.json({
             status: true,
             rooms_info: await getsearchedRooms(search_query.toLowerCase())
         });
     }
-    catch (err){
+    catch (err) {
         console.log(err);
         res.json({
             status: false,
@@ -196,13 +198,13 @@ router.get("/rooms/search-rooms", async (req, res) => {
 })
 
 router.get("/rooms/get-messages", async (req, res) => {
-    try{
+    try {
         res.json({
             status: true,
             messages: await getRoomMessages(parseInt(req.query.room_id))
         });
     }
-    catch{
+    catch {
         res.json({
             status: false,
             message: err
@@ -211,12 +213,33 @@ router.get("/rooms/get-messages", async (req, res) => {
 })
 
 router.post("/rooms/room-message", upload.array("files"), async (req, res) => {
-    try{
+    try {
         const files = req.files;
         const data = req.body;
+        data["timestamp"] = new Date();
+
         console.log(data);
+        console.log(files);
+
+        const files_list = [];
+        for (const file of files) files_list.push(file.filename);
+
+        saveRoomMessage(data, files);
+        reusable_io
+        .to(data.room_id)
+        .except(user_socket_map.get(data.user_id))
+        .emit("get-room-message", {
+            r_id: data.room_id,
+            user_id: data.user_id,
+            sender_details: await getUserDetails(data.user_id),
+            message: data.message,
+            sent_at: data.timestamp,
+            file_status: files.length > 0 ? true : false,
+            files: files_list
+        });
     }
-    catch (err){
+    catch (err) {
+        console.log(err);
         res.json({
             status: true,
             message: err
@@ -243,15 +266,15 @@ router.get("/search-users", async (req, res) => {
 router.post("/rooms/create", upload.single("room_icon"), async (req, res) => {
     const body = req.body;
     const icon = req.file?.filename || null;
-    
+
     const data = {
         ...body,
         room_icon: icon
     }
-    
+
     const r_id = await createRoom(data);
     const status = await roomMembership(r_id, body.room_aid);
-    
+
     res.json({
         status: status,
         room_id: r_id,
@@ -260,8 +283,8 @@ router.post("/rooms/create", upload.single("room_icon"), async (req, res) => {
 });
 
 router.get("/rooms/is_member", async (req, res) => {
-    
-    try{
+
+    try {
         const r_id = req.query.room_id;
         const u_id = req.query.user_id;
 
@@ -270,7 +293,7 @@ router.get("/rooms/is_member", async (req, res) => {
             is_member: await isRoomMember(r_id, u_id)
         });
     }
-    catch(err){
+    catch (err) {
         console.log(err);
         res.json({
             status: false,
@@ -280,7 +303,7 @@ router.get("/rooms/is_member", async (req, res) => {
 });
 
 router.get("/rooms/get-room", async (req, res) => {
-    try{
+    try {
         const room_id = req.query.room_id;
 
         res.json({
@@ -288,7 +311,7 @@ router.get("/rooms/get-room", async (req, res) => {
             room_info: await getRooms('a', room_id)
         });
     }
-    catch(err){
+    catch (err) {
         console.log(err);
         res.json({
             status: false,
@@ -339,7 +362,7 @@ router.get("/rooms/get_all_rooms", async (req, res) => {
 });
 
 router.get("/rooms/is_member", async (req, res) => {
-    try{
+    try {
         const user_id = req.query.user_id;
         const room_id = req.query.room_id;
 
@@ -348,7 +371,7 @@ router.get("/rooms/is_member", async (req, res) => {
             is_member: await isRoomMember(user_id, room_id)
         });
     }
-    catch (err){
+    catch (err) {
         console.log(err);
         res.json({
             status: false,
@@ -358,7 +381,7 @@ router.get("/rooms/is_member", async (req, res) => {
 });
 
 router.get("/rooms/get-members", async (req, res) => {
-    try{
+    try {
         const r_id = parseInt(req.query.room_id);
 
         res.json({
@@ -366,7 +389,7 @@ router.get("/rooms/get-members", async (req, res) => {
             members: await getRoomMembers(r_id)
         });
     }
-    catch (err){
+    catch (err) {
         console.log(err);
         res.json({
             status: false,
@@ -376,7 +399,7 @@ router.get("/rooms/get-members", async (req, res) => {
 });
 
 router.get("/rooms/join", async (req, res) => {
-    try{
+    try {
         const r_id = req.query.room_id;
         const u_id = req.query.user_id;
 
@@ -385,7 +408,7 @@ router.get("/rooms/join", async (req, res) => {
             join_status: await roomMembership(r_id, u_id)
         });
     }
-    catch (err){
+    catch (err) {
         console.log(err);
         res.json({
             status: false,
@@ -395,7 +418,7 @@ router.get("/rooms/join", async (req, res) => {
 })
 
 router.get("/rooms/leave", async (req, res) => {
-    try{
+    try {
         const r_id = req.query.room_id;
         const u_id = req.query.user_id;
 
@@ -404,7 +427,7 @@ router.get("/rooms/leave", async (req, res) => {
             join_status: await roomDisMembership(r_id, u_id)
         });
     }
-    catch (err){
+    catch (err) {
         console.log(err);
         res.json({
             status: false,
@@ -600,7 +623,7 @@ router.post("/reject-request", async (req, res) => {
 });
 
 router.get("/dms/get-contacts", async (req, res) => {
-    try{
+    try {
         const user_id = req.query.user_id;
 
         res.json({
@@ -608,7 +631,7 @@ router.get("/dms/get-contacts", async (req, res) => {
             contacts: await getUserContacts(user_id)
         });
     }
-    catch(err){
+    catch (err) {
         res.json({
             status: false,
             message: err
@@ -619,7 +642,7 @@ router.get("/dms/get-contacts", async (req, res) => {
 });
 
 router.get("/dms/get-chats", async (req, res) => {
-    try{
+    try {
         const contact_id = req.query.contact_id;
 
         res.json({
@@ -627,7 +650,7 @@ router.get("/dms/get-chats", async (req, res) => {
             chats: await getUserChats(contact_id)
         });
     }
-    catch (err){
+    catch (err) {
         res.json({
             status: false,
             message: err
