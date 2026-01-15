@@ -521,21 +521,19 @@ router.get("/requests/sent/:userId", async (req, res) => {
 
 
 router.post("/accept-request", async (req, res) => {
-    const { requestId, userId } = req.body; // receiver id
-
+    const { requestId, userId } = req.body; // userId = receiver
     const client = await pool.connect();
 
     try {
         await client.query("BEGIN");
 
-        // 1️⃣ validate request
+        // 1️⃣ Accept the selected request
         const result = await client.query(
             `
             UPDATE friend_requests
             SET status = 'accepted'
             WHERE id = $1
               AND receiver_id = $2
-              AND status = 'pending'
             RETURNING sender_id, receiver_id
             `,
             [requestId, userId]
@@ -548,7 +546,17 @@ router.post("/accept-request", async (req, res) => {
 
         const { sender_id, receiver_id } = result.rows[0];
 
-        // 2️⃣ insert friends (both directions)
+        // 2️⃣ DELETE *ALL* requests between these users (both directions)
+        await client.query(
+            `
+            DELETE FROM friend_requests
+            WHERE (sender_id = $1 AND receiver_id = $2)
+               OR (sender_id = $2 AND receiver_id = $1)
+            `,
+            [sender_id, receiver_id]
+        );
+
+        // 3️⃣ Insert into friends table
         await client.query(
             `
             INSERT INTO friends (user_id, friend_id)
@@ -559,7 +567,6 @@ router.post("/accept-request", async (req, res) => {
         );
 
         await client.query("COMMIT");
-
         res.json({ success: true });
 
     } catch (err) {
@@ -570,6 +577,7 @@ router.post("/accept-request", async (req, res) => {
         client.release();
     }
 });
+
 
 
 router.post("/reject-request", async (req, res) => {
