@@ -16,7 +16,8 @@ import {
     getUserContacts,
     getUserChats,
     getsearchedRooms,
-    saveRoomMessage
+    saveRoomMessage,
+    updateRoom
 } from './RouterLogics.js';
 import { reusable_io, user_socket_map } from '../sockets/socket_comm.js';
 
@@ -218,24 +219,31 @@ router.post("/rooms/room-message", upload.array("files"), async (req, res) => {
         const data = req.body;
         data["timestamp"] = new Date();
 
-        console.log(data);
-        console.log(files);
-
         const files_list = [];
-        for (const file of files) files_list.push(file.filename);
+        for (const file of files) files_list.push({
+            filename: file.originalname,
+            file_url: file.filename
+        });
 
         saveRoomMessage(data, files);
         reusable_io
-        .to(data.room_id)
-        .except(user_socket_map.get(data.user_id))
-        .emit("get-room-message", {
-            r_id: data.room_id,
-            user_id: data.user_id,
-            sender_details: await getUserDetails(data.user_id),
-            message: data.message,
+            .to(data.room_id)
+            .except(user_socket_map.get(data.user_id))
+            .emit("get-room-message", {
+                r_id: data.room_id,
+                user_id: data.user_id,
+                sender_details: await getUserDetails(data.user_id),
+                message: data.message,
+                sent_at: data.timestamp,
+                status: "complete",
+                files: files_list
+            });
+
+        res.json({
+            msg_id: data.msg_id,
             sent_at: data.timestamp,
-            file_status: files.length > 0 ? true : false,
-            files: files_list
+            files: files_list,
+            status: true
         });
     }
     catch (err) {
@@ -281,6 +289,33 @@ router.post("/rooms/create", upload.single("room_icon"), async (req, res) => {
         icon_name: data.room_icon
     });
 });
+
+router.post("/rooms/update", upload.single("room_icon"), async (req, res) => {
+    try {
+        const body = req.body;
+        const icon = req.file?.filename || null;
+
+        const data = {
+            ...body,
+            room_icon: icon
+        }
+
+        const r_id = await updateRoom(data);
+
+        res.json({
+            status: true,
+            room_id: r_id,
+            icon_name: data.room_icon
+        });
+    }
+    catch (err) {
+        console.log(err);
+        res.json({
+            status: false,
+            message: err
+        });
+    }
+})
 
 router.get("/rooms/is_member", async (req, res) => {
 

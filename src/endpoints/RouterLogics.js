@@ -100,6 +100,37 @@ export async function createRoom(data) {
     }
 }
 
+export async function updateRoom(data){
+    try{
+        const db_res = await pool.query(
+            `
+            UPDATE rooms
+            SET
+                r_name = COALESCE(NULLIF($1, ''), r_name),
+                r_desc = COALESCE(NULLIF($2, ''), r_desc),
+                r_size = $3,
+                r_type = $4,
+                join_pref = $5,
+                icon_url = $6
+
+            WHERE r_id = $7;
+            `,
+            [
+                data.room_name,
+                data.room_desc,
+                data.room_size,
+                data.room_type,
+                data.join_pref,
+                data.room_icon,
+                data.room_id
+            ]
+        );
+    }
+    catch (err){
+        console.log(err);
+    }
+}
+
 export async function getsearchedRooms(search_query, offset){
     try{
         const search_string1 = `%${search_query}`;
@@ -134,10 +165,37 @@ export async function getRoomMessages(r_id){
     try{
         const db_res = await pool.query(
             `
-            SELECT * FROM room_messages
-            JOIN users ON room_messages.user_id = users.id
-            WHERE room_messages.r_id = $1
-            ORDER BY room_messages.sent_at ASC
+            SELECT
+                rm.*,
+                u.username,
+                u.pfp,
+                COALESCE(
+                    JSON_AGG(
+                        JSON_BUILD_OBJECT(
+                            'filename', rmf.filename,
+                            'file_url', rmf.file_url,
+                            'mime_type', rmf.mime_type
+                        ) ORDER BY rmf.file_id ASC
+                    ) FILTER (WHERE rmf.file_id IS NOT NULL),
+                    '[]'::json
+                ) AS files
+            FROM room_messages rm
+
+            LEFT JOIN room_message_files rmf
+                ON rmf.message_id = rm.message_id
+            
+            JOIN users u
+                ON u.id = rm.user_id
+
+            WHERE rm.r_id = $1
+
+            GROUP BY
+                rm.message_id,
+                u.username,
+                u.pfp
+
+            ORDER BY rm.sent_at ASC
+
             LIMIT 100;
             `,
             [r_id]
