@@ -315,7 +315,7 @@ router.post("/rooms/update", upload.single("room_icon"), async (req, res) => {
             message: err
         });
     }
-})
+});
 
 router.get("/rooms/is_member", async (req, res) => {
 

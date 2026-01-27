@@ -111,7 +111,7 @@ export async function updateRoom(data){
                 r_size = $3,
                 r_type = $4,
                 join_pref = $5,
-                icon_url = $6
+                icon_url = COALESCE(NULLIF($6, ''), icon_url)
 
             WHERE r_id = $7;
             `,
