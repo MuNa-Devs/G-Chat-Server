@@ -1,6 +1,7 @@
 import express from 'express';
 import multer from 'multer';
 import path from "path";
+import bcrypt from "bcrypt";
 
 import pool from '../db.js';
 import {
@@ -20,6 +21,7 @@ import {
     updateRoom
 } from './RouterLogics.js';
 import { reusable_io, user_socket_map } from '../sockets/socket_comm.js';
+import checkPasswordStrength from '../tools/pswd_strength.js';
 
 const router = express.Router();
 
@@ -40,13 +42,61 @@ router.post('/signup', async (req, res) => {
     try {
         const { username, email, password } = req.body;
 
-        const result = await pool.query(
-            "INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING *",
-            [username, email, password]
+        // Check for empty fields
+        if (!username || !email || !password) {
+            res.status(400).json({
+                success: false,
+                code: 0
+            });
 
+            return;
+        }
+
+        // Verify email
+        if (!(/^[a-zA-Z\d._%+-]+@(([a-z]+\.)?gitam\.(in|edu))$/u.test(email))) {
+            res.status(400).json({
+                success: false,
+                code: 1
+            });
+
+            return;
+        }
+
+        // Check for password strength
+        const pswd_strength = checkPasswordStrength(password);
+
+        if (!pswd_strength.ok) {
+            res.status(400).json({
+                success: false,
+                code: pswd_strength.code
+            });
+
+            return;
+        }
+
+        // Encrypt the password
+        let password_hashed;
+
+        try { password_hashed = await bcrypt.hash(password, 10) }
+        catch (err) {
+            res.status(500).json({
+                success: false,
+                code: 3
+            });
+
+            return;
+        }
+
+        const result = await pool.query(
+            `
+            INSERT INTO users (username, email, password)
+            VALUES
+                ($1, $2, $3)
+            RETURNING id
+            `,
+            [username, email, password_hashed]
         );
 
-        console.log(req.body);
         res.json({
             success: true,
             message: "User registered successfully",
@@ -57,10 +107,17 @@ router.post('/signup', async (req, res) => {
     catch (err) {
         console.error(err);
 
+        if (err.code === '23505') {
+            return res.status(409).json({
+                success: false,
+                code: 4
+            });
+        }
+
         res.status(500).json({
             success: false,
-            message: "Internal server error"
-        })
+            code: 5
+        });
     }
 });
 
