@@ -36,7 +36,7 @@ const file_storage = multer.diskStorage({
 
 const upload = multer({ storage: file_storage });
 
-router.get('/ping', (req, res) => res.json({ status: true }));
+router.get('/ping', (req, res) => res.json({ status: true })); // ok
 
 router.post('/signup', async (req, res) => {
     try {
@@ -102,7 +102,6 @@ router.post('/signup', async (req, res) => {
             message: "User registered successfully",
             user: result.rows[0]
         })
-
     }
     catch (err) {
         console.error(err);
