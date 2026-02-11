@@ -1,25 +1,33 @@
 import zxcvbn from "zxcvbn";
+import { 
+    LowEntropyPassword, 
+    MissingData, 
+    MissingLowercase, 
+    MissingSpecialChar, 
+    MissingUppercase, 
+    ShortPassword 
+} from "../error_classes/defined_errors.js";
 
 const password_rules = [
     {
         test: (p) => /[a-z]/.test(p),
-        code: 20
+        error: MissingLowercase
     },
     {
         test: (p) => /[A-Z]/.test(p),
-        code: 21
+        error: MissingUppercase
     },
     {
         test: (p) => /\d/.test(p),
-        code: 22
+        error: MissingData
     },
     {
         test: (p) => /[!@#$%^&*_]/.test(p),
-        code: 23
+        error: MissingSpecialChar
     },
     {
         test: (p) => p.length >= 8,
-        code: 24
+        error: ShortPassword
     }
 ];
 
@@ -29,7 +37,7 @@ function layer1(password){
         if (!rule.test(password)){
             return {
                 ok: false,
-                code: rule.code
+                error: rule.error
             };
         }
     }
@@ -43,7 +51,7 @@ function layer2(password){
     if (score < 3){
         return {
             ok: false,
-            code: 25
+            error: LowEntropyPassword
         };
     }
 

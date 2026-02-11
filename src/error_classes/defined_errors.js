@@ -113,6 +113,26 @@ export class DuplicateUser extends AppError {
     }
 }
 
+export class DBIntegrityError extends AppError{
+    constructor(){
+        super(
+            "Generic DB error",
+            500,
+            "DB_INTEGRITY_ERROR"
+        );
+    }
+}
+
+export class InvalidUser extends AppError{
+    constructor() {
+        super(
+            "Invalid email or password",
+            401,
+            "INVALID_USER"
+        );
+    }
+}
+
 export class DatabaseOrServerError extends AppError {
     constructor() {
         super(

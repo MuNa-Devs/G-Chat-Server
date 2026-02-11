@@ -1,6 +1,6 @@
 import { Server } from 'socket.io';
 
-import pool from '../db.js';
+import pool from '../../trash/db.js';
 import { saveDirectMessage, saveRoomMessage } from './socket_logics.js';
 import { getUserDetails } from '../endpoints/RouterLogics.js';
 

@@ -1,4 +1,4 @@
-import pool from "../db.js";
+import pool from "../../trash/db.js";
 
 export async function getUserDetails(data){
     try{

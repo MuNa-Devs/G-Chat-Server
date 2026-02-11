@@ -1,12 +1,18 @@
-import { getMulter, getRouter } from "../api_utils.js";
-import { handleUserReg } from "./auth.controller.js";
-import { validateUser } from "./auth.middleware.js";
+import { Router } from "express";
+import { 
+    handleUserLogin, 
+    handleUserReg 
+} from "./auth.controller.js";
 
-const router = getRouter();
-const file_storage = getMulter();
+import { 
+    validateLoginUser, 
+    validateRegUser 
+} from "./auth.middleware.js";
 
-router.post(
-    "/user/signup", 
-    validateUser, 
-    handleUserReg
-);
+const auth_router = Router();
+
+auth_router.post("/signup", validateRegUser, handleUserReg);
+
+auth_router.post("/signin", validateLoginUser, handleUserLogin);
+
+export default auth_router;

@@ -19,9 +19,9 @@ import {
     getsearchedRooms,
     saveRoomMessage,
     updateRoom
-} from './RouterLogics.js';
-import { reusable_io, user_socket_map } from '../sockets/socket_comm.js';
-import checkPasswordStrength from '../tools/pswd_strength.js';
+} from '../src/endpoints/RouterLogics.js';
+import { reusable_io, user_socket_map } from '../src/sockets/socket_comm.js';
+import checkPasswordStrength from '../src/tools/pswd_strength.js';
 
 const router = express.Router();
 
@@ -35,134 +35,6 @@ const file_storage = multer.diskStorage({
 });
 
 const upload = multer({ storage: file_storage });
-
-router.get('/ping', (req, res) => res.json({ status: true })); // ok
-
-router.post('/signup', async (req, res) => {
-    try {
-        const { username, email, password } = req.body;
-
-        // Check for empty fields
-        if (!username || !email || !password) {
-            res.status(400).json({
-                success: false,
-                code: 0
-            });
-
-            return;
-        }
-
-        // Verify email
-        if (!(/^[a-zA-Z\d._%+-]+@(([a-z]+\.)?gitam\.(in|edu))$/u.test(email))) {
-            res.status(400).json({
-                success: false,
-                code: 1
-            });
-
-            return;
-        }
-
-        // Check for password strength
-        const pswd_strength = checkPasswordStrength(password);
-
-        if (!pswd_strength.ok) {
-            res.status(400).json({
-                success: false,
-                code: pswd_strength.code
-            });
-
-            return;
-        }
-
-        // Encrypt the password
-        let password_hashed;
-
-        try { password_hashed = await bcrypt.hash(password, 10) }
-        catch (err) {
-            res.status(500).json({
-                success: false,
-                code: 3
-            });
-
-            return;
-        }
-
-        const result = await pool.query(
-            `
-            INSERT INTO users (username, email, password)
-            VALUES
-                ($1, $2, $3)
-            RETURNING id
-            `,
-            [username, email, password_hashed]
-        );
-
-        res.json({
-            success: true,
-            message: "User registered successfully",
-            user: result.rows[0]
-        })
-    }
-    catch (err) {
-        console.error(err);
-
-        if (err.code === '23505') {
-            return res.status(409).json({
-                success: false,
-                code: 4
-            });
-        }
-
-        res.status(500).json({
-            success: false,
-            code: 5
-        });
-    }
-});
-
-router.post('/signin', async (req, res) => {
-    try {
-        const { email, password } = req.body;
-
-        const result = await pool.query(
-            "SELECT * FROM users WHERE email = $1 AND password = $2",
-            [email, password]
-        );
-
-        // No user found
-        if (result.rows.length === 0) {
-            return res.status(401).json({
-                success: false,
-                message: "Invalid email or password"
-            });
-        }
-
-        // More than one user (rare case)
-        if (result.rows.length > 1) {
-            return res.status(500).json({
-                success: false,
-                message: "Duplicate users found — contact admin"
-            });
-        }
-        console.log(req.body);
-
-        // Exactly 1 user
-        return res.json({
-            success: true,
-            message: "User logged in successfully",
-            user: result.rows[0]
-        });
-
-    }
-    catch (err) {
-        console.error(err.message);
-
-        res.status(500).json({
-            success: false,
-            message: "Internal server error"
-        });
-    }
-});
 
 router.get('/users/get-user', async (req, res) => {
     try {
