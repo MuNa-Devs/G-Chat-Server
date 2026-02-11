@@ -2,8 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import http from 'http';
 import path from 'path';
-import getIP from './get_my_ip.js';
 
+import getIP from './get_my_ip.js';
 import router from './endpoints/api_utils/router_factory.js';
 import socketSetup from './sockets/socket_comm.js';
 import { globalErrHandler } from './tools/def_error_handler.js';

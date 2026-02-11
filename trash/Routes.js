@@ -36,25 +36,6 @@ const file_storage = multer.diskStorage({
 
 const upload = multer({ storage: file_storage });
 
-router.get('/users/get-user', async (req, res) => {
-    try {
-        const user_id = parseInt(req.query.user_id);
-        const user_details = await getUserDetails(user_id);
-
-        res.json({
-            status: true,
-            user_details: user_details
-        });
-    }
-    catch (err) {
-        console.log(err);
-        res.json({
-            status: false,
-            message: err
-        });
-    }
-})
-
 router.post("/users/save-details", upload.single("pfp"), async (req, res) => {
     try {
         const user_id = Number(req.query.id);

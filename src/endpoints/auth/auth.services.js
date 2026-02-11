@@ -68,7 +68,7 @@ export async function authorizeUser({ email, password }){
         if (!check)
             throw new InvalidUser();
 
-        return { id: result.rows[0].id };
+        return { id: result.rows[0].id, email: result.rows[0].email };
     }
     catch (err){
         if (err.is_expected)

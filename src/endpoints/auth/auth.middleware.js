@@ -1,7 +1,10 @@
 import checkPasswordStrength from "../../tools/pswd_strength.js";
+import jwt from 'jsonwebtoken';
 import {
     InvalidEmail,
-    MissingData 
+    InvalidJWT,
+    MissingData, 
+    UnAuthorized
 } from "../../error_classes/defined_errors.js";
 
 export function validateRegUser(req, res, next) {
@@ -38,6 +41,29 @@ export function validateLoginUser(req, res, next){
     // Verify email
     if (!(/^[a-zA-Z\d._%+-]+@(([a-z]+\.)?gitam\.(in|edu))$/u.test(email))) {
         throw new InvalidEmail();
+    }
+
+    next();
+}
+
+export function authorizeToken(req, res, next){
+    const auth_token = req.headers.auth_token;
+
+    if (!auth_token){
+        throw new InvalidJWT();
+    }
+
+    const token = auth_token.split(" ")[1];
+
+    if (!token){
+        throw new InvalidJWT();
+    }
+
+    try{
+        req.requesting_user = jwt.verify(token, process.env.JWT_SECRET);
+    }
+    catch (err){
+        throw new InvalidJWT();
     }
 
     next();

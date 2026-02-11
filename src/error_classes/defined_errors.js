@@ -1,19 +1,30 @@
 import AppError from "./AppError.js";
 
-export class MissingData extends AppError{
+export class MissingData extends AppError {
 
-    constructor(){
+    constructor() {
         super(
-            "Missing required data", 
-            400, 
+            "Missing required data",
+            400,
             "MISSING_DATA"
         );
     }
 }
 
-export class InvalidEmail extends AppError{
+export class InvalidData extends AppError {
 
-    constructor(){
+    constructor() {
+        super(
+            "Invalid data value",
+            400,
+            "INVALID_DATA"
+        );
+    }
+}
+
+export class InvalidEmail extends AppError {
+
+    constructor() {
         super(
             "Wrong email format",
             400,
@@ -22,9 +33,9 @@ export class InvalidEmail extends AppError{
     }
 }
 
-export class WeakPassword extends AppError{
+export class WeakPassword extends AppError {
 
-    constructor(){
+    constructor() {
         super(
             "Password is too weak",
             400,
@@ -34,6 +45,7 @@ export class WeakPassword extends AppError{
 }
 
 export class MissingLowercase extends AppError {
+
     constructor() {
         super(
             "Password must contain a lowercase letter",
@@ -44,6 +56,7 @@ export class MissingLowercase extends AppError {
 }
 
 export class MissingUppercase extends AppError {
+
     constructor() {
         super(
             "Password must contain an uppercase letter",
@@ -54,6 +67,7 @@ export class MissingUppercase extends AppError {
 }
 
 export class MissingDigit extends AppError {
+
     constructor() {
         super(
             "Password must contain a digit",
@@ -64,6 +78,7 @@ export class MissingDigit extends AppError {
 }
 
 export class MissingSpecialChar extends AppError {
+
     constructor() {
         super(
             "Password must contain a special character",
@@ -74,6 +89,7 @@ export class MissingSpecialChar extends AppError {
 }
 
 export class ShortPassword extends AppError {
+
     constructor() {
         super(
             "Password is too short",
@@ -84,6 +100,7 @@ export class ShortPassword extends AppError {
 }
 
 export class LowEntropyPassword extends AppError {
+
     constructor() {
         super(
             "Password entropy is too low",
@@ -94,6 +111,7 @@ export class LowEntropyPassword extends AppError {
 }
 
 export class RegistrationFailed extends AppError {
+
     constructor() {
         super(
             "User registration failed",
@@ -104,6 +122,7 @@ export class RegistrationFailed extends AppError {
 }
 
 export class DuplicateUser extends AppError {
+
     constructor() {
         super(
             "User with email already exists",
@@ -113,8 +132,9 @@ export class DuplicateUser extends AppError {
     }
 }
 
-export class DBIntegrityError extends AppError{
-    constructor(){
+export class DBIntegrityError extends AppError {
+
+    constructor() {
         super(
             "Generic DB error",
             500,
@@ -123,7 +143,8 @@ export class DBIntegrityError extends AppError{
     }
 }
 
-export class InvalidUser extends AppError{
+export class InvalidUser extends AppError {
+
     constructor() {
         super(
             "Invalid email or password",
@@ -133,7 +154,30 @@ export class InvalidUser extends AppError{
     }
 }
 
+export class UnAuthorized extends AppError {
+
+    constructor() {
+        super(
+            "User not authorized",
+            401,
+            "UNAUTHORIZED"
+        );
+    }
+}
+
+export class InvalidJWT extends AppError {
+
+    constructor() {
+        super(
+            "JWT expired or invalid",
+            401,
+            "INVALID_JWT"
+        );
+    }
+}
+
 export class DatabaseOrServerError extends AppError {
+
     constructor() {
         super(
             "Database or server error",
