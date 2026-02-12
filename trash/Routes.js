@@ -21,7 +21,6 @@ import {
     updateRoom
 } from '../src/endpoints/RouterLogics.js';
 import { reusable_io, user_socket_map } from '../src/sockets/socket_comm.js';
-import checkPasswordStrength from '../src/tools/pswd_strength.js';
 
 const router = express.Router();
 
@@ -35,54 +34,6 @@ const file_storage = multer.diskStorage({
 });
 
 const upload = multer({ storage: file_storage });
-
-router.post("/users/save-details", upload.single("pfp"), async (req, res) => {
-    try {
-        const user_id = Number(req.query.id);
-        if (!Number.isInteger(user_id)) {
-            return res.status(400).json({ status: false, message: "Invalid user id" });
-        }
-
-        const body = req.body;
-        const pfp = req.file?.filename || body.pfp || null;
-
-        const data = {
-            id: user_id,
-            ...body,
-            pfp
-        };
-
-        const status = await saveUserDetails(data);
-
-        res.json({ status, pfp });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ status: false });
-    }
-});
-
-router.get("/messages", async (req, res) => {
-    try {
-        const result = await pool.query(
-            `
-            SELECT
-            messages.id,
-            messages.user_id,
-            messages.message,
-            messages.created_at,
-            users.username
-            FROM messages
-            JOIN users ON users.id = messages.user_id
-            ORDER BY messages.created_at;
-            `
-        );
-
-        res.json(result.rows);
-    } catch (err) {
-        console.error(err.message);
-        res.status(500).json({ error: "Failed to fetch messages" });
-    }
-});
 
 router.get("/rooms/search-rooms", async (req, res) => {
     try {

@@ -9,6 +9,8 @@ export function globalErrHandler(err, req, res, next){
         });
     }
 
+    console.error("Unexpected error:", err);
+
     res.status(500).json({
         success: false,
         code: "INTERNAL_ERROR",

@@ -3,8 +3,7 @@ import jwt from 'jsonwebtoken';
 import {
     InvalidEmail,
     InvalidJWT,
-    MissingData, 
-    UnAuthorized
+    MissingData,
 } from "../../error_classes/defined_errors.js";
 
 export function validateRegUser(req, res, next) {

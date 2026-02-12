@@ -165,6 +165,17 @@ export class UnAuthorized extends AppError {
     }
 }
 
+export class ForbiddenAccess extends AppError{
+
+    constructor(){
+        super(
+            "Access is restricted",
+            403,
+            "FORBIDDEN"
+        );
+    }
+}
+
 export class InvalidJWT extends AppError {
 
     constructor() {
