@@ -77,7 +77,7 @@ export async function createRoom(data) {
                 INSERT INTO rooms
                 (r_name, r_desc, r_aid, r_size, popl_size, r_type, join_pref, icon_url)
                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-                RETURNING *
+                RETURNING r_id;
             `,
             [
                 data.room_name,
