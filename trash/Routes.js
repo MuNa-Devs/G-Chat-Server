@@ -92,22 +92,6 @@ router.post("/rooms/room-message", upload.array("files"), async (req, res) => {
     }
 })
 
-router.get("/search-users", async (req, res) => {
-    const { query } = req.query;
-
-    const result = await pool.query(
-        `
-        SELECT id, username
-        FROM users
-        WHERE username ILIKE $1
-        LIMIT 10
-        `,
-        [`%${query}%`]
-    );
-
-    res.json(result.rows);
-});
-
 router.post("/rooms/create", upload.single("room_icon"), async (req, res) => {
     const body = req.body;
     const icon = req.file?.filename || null;
@@ -311,31 +295,6 @@ router.get("/friends/:userId", async (req, res) => {
     }
 });
 
-router.post("/send-request", async (req, res) => {
-    const { senderId, receiverId } = req.body;
-
-    if (!senderId || !receiverId || senderId === receiverId) {
-        return res.status(400).json({ error: "Invalid request" });
-    }
-
-    try {
-        await pool.query(
-            `
-            INSERT INTO friend_requests (sender_id, receiver_id)
-            VALUES ($1, $2)
-            ON CONFLICT DO NOTHING
-            `,
-            [senderId, receiverId]
-        );
-
-        res.json({ success: true });
-
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: "Failed to send request" });
-    }
-});
-
 
 router.get("/requests/received/:userId", async (req, res) => {
     const { userId } = req.params;
@@ -352,87 +311,6 @@ router.get("/requests/received/:userId", async (req, res) => {
 
     res.json(result.rows);
 });
-
-
-router.get("/requests/sent/:userId", async (req, res) => {
-    const { userId } = req.params;
-
-    const result = await pool.query(
-        `
-        SELECT fr.id, u.id AS receiver_id, u.username
-        FROM friend_requests fr
-        JOIN users u ON u.id = fr.receiver_id
-        WHERE fr.sender_id = $1
-          AND fr.status = 'pending'
-        ORDER BY fr.id DESC
-        `,
-        [userId]
-    );
-
-    res.json(result.rows);
-});
-
-
-
-router.post("/accept-request", async (req, res) => {
-    const { requestId, userId } = req.body; // userId = receiver
-    const client = await pool.connect();
-
-    try {
-        await client.query("BEGIN");
-
-        // 1️⃣ Accept the selected request
-        const result = await client.query(
-            `
-            UPDATE friend_requests
-            SET status = 'accepted'
-            WHERE id = $1
-              AND receiver_id = $2
-            RETURNING sender_id, receiver_id
-            `,
-            [requestId, userId]
-        );
-
-        if (result.rowCount === 0) {
-            await client.query("ROLLBACK");
-            return res.status(400).json({ message: "Invalid request" });
-        }
-
-        const { sender_id, receiver_id } = result.rows[0];
-
-        // 2️⃣ DELETE *ALL* requests between these users (both directions)
-        await client.query(
-            `
-            DELETE FROM friend_requests
-            WHERE (sender_id = $1 AND receiver_id = $2)
-               OR (sender_id = $2 AND receiver_id = $1)
-            `,
-            [sender_id, receiver_id]
-        );
-
-        // 3️⃣ Insert into friends table
-        await client.query(
-            `
-            INSERT INTO friends (user_id, friend_id)
-            VALUES ($1, $2), ($2, $1)
-            ON CONFLICT DO NOTHING
-            `,
-            [sender_id, receiver_id]
-        );
-
-        await client.query("COMMIT");
-        res.json({ success: true });
-
-    } catch (err) {
-        await client.query("ROLLBACK");
-        console.error(err);
-        res.status(500).json({ error: "Failed to accept request" });
-    } finally {
-        client.release();
-    }
-});
-
-
 
 router.post("/reject-request", async (req, res) => {
     const { requestId, userId } = req.body;

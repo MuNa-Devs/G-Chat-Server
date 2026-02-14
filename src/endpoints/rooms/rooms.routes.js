@@ -33,6 +33,12 @@ rooms_router.get(
 );
 
 rooms_router.get(
+    "/get-room",
+    authorizeToken,
+    //
+)
+
+rooms_router.get(
     "/search",
     authorizeToken,
     checkSearchRoomParams,
@@ -41,8 +47,8 @@ rooms_router.get(
 
 rooms_router.post(
     "/create",
-    upload.single("room_icon"),
     authorizeToken,
+    upload.single("room_icon"),
     checkModifyRoomParams,
     handleModifyRooms
 );

@@ -149,6 +149,8 @@ export async function getSearchedRooms(search_query, last_seen_id, user_id){
 
             GROUP BY r.r_id, u.username
 
+            ORDER BY r.r_name ASC
+
             LIMIT 15;
             `,
             [search_string, last_seen_id]
@@ -211,5 +213,8 @@ export async function createRoom(user_id, data){
 
         console.error("Unexpected DB error for user", user_id, err);
         throw new DatabaseOrServerError();
+    }
+    finally{
+        db_instance.release();
     }
 }

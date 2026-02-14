@@ -121,6 +121,17 @@ export class RegistrationFailed extends AppError {
     }
 }
 
+export class FrndReqTransactionFailed extends AppError{
+
+    constructor(){
+        super(
+            "Friend request transaction failed",
+            500,
+            "FRND_REQ_TRANSACTION_ERROR"
+        );
+    }
+}
+
 export class DuplicateUser extends AppError {
 
     constructor() {
