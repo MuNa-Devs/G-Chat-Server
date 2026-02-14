@@ -17,7 +17,7 @@ export function checkGetRoomParams(req, res, next){
     if (!Number.isInteger(user_id) || !Number.isInteger(last_seen_id))
         throw new InvalidData();
 
-    if (last_seen_id < 0)
+    if (last_seen_id <= 0)
         throw new InvalidData();
 
     req.user_id = user_id;
@@ -36,6 +36,12 @@ export function checkSearchRoomParams(req, res, next){
 
     if (!search_query || (last_seen_id !== 0 && !last_seen_id))
         throw new MissingData();
+
+    if (!Number.isInteger(user_id) || !Number.isInteger(last_seen_id))
+        throw new InvalidData();
+
+    if (last_seen_id <= 0)
+        throw new InvalidData();
 
     req.user_id = user_id;
     req.last_seen_id = last_seen_id;

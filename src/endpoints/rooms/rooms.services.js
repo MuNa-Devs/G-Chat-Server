@@ -36,13 +36,13 @@ export async function getRooms(constraint, user_id, last_seen_id, room_id) {
                 WHERE
                     r.r_type = 'public'
                     AND
-                    r.r_id > $2
+                    r.r_id < $2
 
                 GROUP BY r.r_id, u.username
 
                 ORDER BY r.r_id DESC
 
-                LIMIT 20
+                LIMIT 15
                 `,
                     [user_id, last_seen_id]
                 );
@@ -71,13 +71,13 @@ export async function getRooms(constraint, user_id, last_seen_id, room_id) {
                     OR 
                     rm.user_id = $1
                     AND
-                    r.r_id > $2
+                    r.r_id < $2
 
                 GROUP BY r.r_id, u.username
 
                 ORDER BY r.r_id DESC
 
-                LIMIT 20
+                LIMIT 15
                 `,
                     [user_id, last_seen_id]
                 );
@@ -145,11 +145,11 @@ export async function getSearchedRooms(search_query, last_seen_id, user_id){
                 OR
                 u.username ILIKE $1
                 AND
-                r.r_id > $2
+                r.r_id < $2
 
             GROUP BY r.r_id, u.username
 
-            LIMIT 20;
+            LIMIT 15;
             `,
             [search_string, last_seen_id]
         );
