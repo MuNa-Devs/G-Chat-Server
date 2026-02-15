@@ -4,6 +4,7 @@ import {
 } from './auth.services.js';
 
 import jwt from 'jsonwebtoken';
+import nodemailer from "nodemailer";
 
 export async function handleUserReg(req, res, next) {
     try{
@@ -48,3 +49,32 @@ export async function handleUserLogin(req, res, next){
     }
     catch (err){ next(err) }
 }
+
+export const testMail = async (req, res) => {
+    try {
+
+        console.log("EMAIL:", process.env.EMAIL);
+        console.log("EMAIL_PASS:", process.env.EMAIL_PASS);
+
+        const transporter = nodemailer.createTransport({
+            service: "gmail",
+            auth: {
+                user: process.env.EMAIL,
+                pass: process.env.EMAIL_PASS
+            }
+        });
+
+        await transporter.sendMail({
+            from: process.env.EMAIL,
+            to: process.env.EMAIL,
+            subject: "Test Mail",
+            text: "Mail is working!"
+        });
+
+        res.json({ message: "Mail sent successfully" });
+
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ error: "Mail failed" });
+    }
+};

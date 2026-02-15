@@ -1,5 +1,5 @@
 import { Router } from "express";
-import auth_router from "../auth/auth.routes.js";
+import auth_router from "../auth/auth.routes.js" ;
 import user_router from "../users/users.routes.js";
 import msg_router from "../messages/messages.router.js";
 import rooms_router from "../rooms/rooms.routes.js";

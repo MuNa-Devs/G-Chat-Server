@@ -10,6 +10,7 @@ import { globalErrHandler } from './tools/def_error_handler.js';
 
 const ip = getIP();
 const app = express();
+console.log("Working directory:", process.cwd());
 
 app.use(cors({
     origin: '*'
