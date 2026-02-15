@@ -108,10 +108,10 @@ export async function searchUsers(user_id, search_query) {
                 username ILIKE $1
                 AND
                 NOT id = $2
+                
+            ORDER BY u.username ASC
 
-            LIMIT 15
-
-            ORDER BY username ASC;
+            LIMIT 15;
             `,
             [search_string, user_id]
         );
@@ -177,6 +177,7 @@ export async function sendFrndReq(sender, receiver) {
         const result = await db_instance.query(
             `
             INSERT INTO friend_requests
+                (sender, receiver)
 
             SELECT $1, $2
 
@@ -313,17 +314,23 @@ export async function getSentFrndReqs(user_id) {
         const result = await pool.query(
             `
             SELECT
-                request_id,
-                sender AS user_id,
-                receiver AS receiver_id,
-                sent_at
-            FROM friend_requests
+                fr.request_id,
+                fr.sender AS user_id,
+                fr.receiver AS receiver_id,
+                u.username AS receiver_name,
+                u.pfp AS receiver_pfp,
+                fr.sent_at
+            FROM friend_requests fr
 
-            WHERE sender_id = $1
+            JOIN users u
+            ON
+                fr.receiver = u.id
 
-            LIMIT 15
+            WHERE sender = $1
 
-            ORDER BY request_id DESC;
+            ORDER BY request_id DESC
+
+            LIMIT 15;
             `,
             [user_id]
         );
@@ -331,6 +338,40 @@ export async function getSentFrndReqs(user_id) {
         return result.rows;
     }
     catch (err) {
+        console.error("Unexpected DB error for user", user_id, err);
+        throw new DatabaseOrServerError();
+    }
+}
+
+export async function getRecFrndReqs(user_id){
+    try{
+        const result = await pool.query(
+            `
+            SELECT
+                fr.request_id,
+                fr.sender AS sender_id,
+                u.username AS sender_name,
+                u.pfp AS sender_pfp,
+                fr.receiver AS user_id,
+                fr.sent_at
+            FROM friend_requests fr
+
+            JOIN users u
+            ON
+                fr.sender = u.id
+
+            WHERE receiver = $1
+            
+            ORDER BY request_id DESC
+
+            LIMIT 15;
+            `,
+            [user_id]
+        );
+
+        return result.rows;
+    }
+    catch (err){
         console.error("Unexpected DB error for user", user_id, err);
         throw new DatabaseOrServerError();
     }
@@ -344,7 +385,7 @@ export async function getFriends(user_id) {
                 f.friend_id,
                 u.id,
                 u.username,
-                u.pfp,
+                u.pfp
             FROM friends f
 
             JOIN users u
@@ -352,6 +393,7 @@ export async function getFriends(user_id) {
                 u.id = CASE
                     WHEN f.user1 = $1 THEN f.user2
                     ELSE f.user1
+                END
 
             WHERE (
                 f.user1 = $1
@@ -359,15 +401,40 @@ export async function getFriends(user_id) {
                 f.user2 = $1
             )
             
-            LIMIT 15
+            ORDER BY u.username ASC
 
-            ORDER BY u.username ASC;
-            `
-        )
+            LIMIT 15;
+            `,
+            [user_id]
+        );
 
         return result.rows;
     }
     catch (err) {
+        console.error("Unexpected DB error for user", user_id, err);
+        throw new DatabaseOrServerError();
+    }
+}
+
+export async function removeFriend(friend_id, user_id){
+    try{
+        const result = await pool.query(
+            `
+            DELETE FROM friends
+
+            WHERE friend_id = $1
+
+            RETURNING 1;
+            `,
+            [friend_id]
+        );
+
+        if (!result.rowCount)
+            throw new FrndReqTransactionFailed();
+
+        return result.rows[0];
+    }
+    catch (err){
         console.error("Unexpected DB error for user", user_id, err);
         throw new DatabaseOrServerError();
     }

@@ -12,8 +12,10 @@ import {
     handleGetUser, 
     handleSaveDetails, 
     handleSearchUser,
-    handleGetFrndReqs,
-    handleGetFrnds
+    handleGetSentFrndReqs,
+    handleGetFrnds,
+    handleRemoveFrnd,
+    handleGetRecFrndReqs
 } from "./users.controller.js";
 
 import { authorizeToken } from "./../auth/auth.middleware.js";
@@ -54,7 +56,14 @@ user_router.get(
     "/requests/sent",
     authorizeToken,
     checkUserId,
-    handleGetFrndReqs
+    handleGetSentFrndReqs
+)
+
+user_router.get(
+    "/requests/received",
+    authorizeToken,
+    checkUserId,
+    handleGetRecFrndReqs
 )
 
 user_router.get(
@@ -68,7 +77,8 @@ user_router.post(
     "/friends/remove",
     authorizeToken,
     checkUserId,
-    chkRemoveFrndData
+    chkRemoveFrndData,
+    handleRemoveFrnd
 )
 
 export default user_router;

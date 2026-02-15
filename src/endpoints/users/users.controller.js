@@ -7,6 +7,7 @@ import {
 import { 
     acceptFrndReq, 
     getFriends, 
+    getRecFrndReqs, 
     getSentFrndReqs, 
     getUser, 
     rejectFrndReq, 
@@ -111,7 +112,7 @@ export async function handleTransacFrndReqs(req, res, next){
     }
 }
 
-export async function handleGetFrndReqs(req, res, next){
+export async function handleGetSentFrndReqs(req, res, next){
     const user_id = Number(req.user_id);
 
     try{
@@ -120,6 +121,22 @@ export async function handleGetFrndReqs(req, res, next){
         res.status(201).json({
             success: true,
             sent_reqs
+        });
+    }
+    catch (err){
+        next(err);
+    }
+}
+
+export async function handleGetRecFrndReqs(req, res, next){
+    const user_id = Number(req.user_id);
+
+    try{
+        const rec_reqs = await getRecFrndReqs(user_id);
+
+        res.status(201).json({
+            success: true,
+            rec_reqs
         });
     }
     catch (err){
@@ -144,5 +161,12 @@ export async function handleGetFrnds(req, res, next){
 }
 
 export async function handleRemoveFrnd(req, res, next){
-    //
+    const data = req.data;
+
+    try{
+        //
+    }
+    catch (err){
+        next(err);
+    }
 }

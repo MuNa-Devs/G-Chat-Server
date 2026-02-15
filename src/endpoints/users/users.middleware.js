@@ -97,4 +97,8 @@ export function chkRemoveFrndData(req, res, next){
 
     if (Number(data.userId) !== user_id)
         throw new ForbiddenAccess();
+
+    req.data = data;
+
+    next();
 }
