@@ -142,3 +142,7 @@ export async function handleGetFrnds(req, res, next){
         next(err);
     }
 }
+
+export async function handleRemoveFrnd(req, res, next){
+    //
+}

@@ -3,7 +3,8 @@ import { Router } from "express";
 import { 
     checkFrndReqParams,
     checkSearchUserParams, 
-    checkUserId 
+    checkUserId, 
+    chkRemoveFrndData
 } from "./users.middleware.js";
 
 import { 
@@ -61,6 +62,13 @@ user_router.get(
     authorizeToken,
     checkUserId,
     handleGetFrnds
+)
+
+user_router.post(
+    "/friends/remove",
+    authorizeToken,
+    checkUserId,
+    chkRemoveFrndData
 )
 
 export default user_router;
