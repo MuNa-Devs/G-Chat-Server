@@ -1,6 +1,7 @@
 import { 
     ForbiddenAccess, 
-    InvalidData 
+    InvalidData, 
+    MissingData
 } from "../../error_classes/defined_errors.js";
 
 import { 
@@ -14,8 +15,14 @@ import {
 } from "./users.services.js";
 
 export async function handleGetUser(req, res, next){
-    const user_id = Number(req.requested_user_id);
+    const user_id = Number(req.user_id);
     const req_user_id = Number(req.query.req_user_id);
+
+    if (!req_user_id)
+        throw new MissingData();
+
+    if (!Number.isInteger(req_user_id))
+        throw new InvalidData();
 
     try{
         const user = await getUser(req_user_id);

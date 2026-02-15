@@ -16,7 +16,7 @@ export function checkUserId(req, res, next){
     if (!Number.isInteger(user_id) || user_id < 1)
         throw new InvalidData();
 
-    req.user_id = user_id; // user to fetch
+    req.user_id = user_id;
 
     next();
 }
