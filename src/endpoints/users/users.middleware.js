@@ -68,7 +68,7 @@ export function checkFrndReqParams(req, res, next){
 
             break;
 
-        case "accept":
+        case "accept" || "reject":
             if (!data.requestId || !data.userId)
                 throw new MissingData();
 
@@ -77,11 +77,6 @@ export function checkFrndReqParams(req, res, next){
 
             if (data.userId !== user_id)
                 throw new ForbiddenAccess();
-
-            break;
-
-        case "reject":
-            //
 
             break;
     }

@@ -282,8 +282,23 @@ export async function acceptFrndReq(request_id, user_id) {
     }
 }
 
-export async function rejectFrndReq() {
-    //
+export async function rejectFrndReq(request_id, user_id) {
+    try{
+        const result = await pool.query(
+            `
+            DELETE FROM friend_requests
+            WHERE (
+                request_id = $1
+                AND
+                receiver_id = $2
+            )
+            `
+        )
+    }
+    catch (err){
+        console.error("Unexpected DB error for user", user_id, err);
+        throw new DatabaseOrServerError();
+    }
 }
 
 export async function getSentFrndReqs(user_id) {
@@ -319,10 +334,34 @@ export async function getFriends(user_id) {
         const result = await pool.query(
             `
             SELECT
+                f.friend_id,
+                u.id,
+                u.username,
+                u.pfp,
+            FROM friends f
+
+            JOIN users u
+            ON
+                u.id = CASE
+                    WHEN f.user1 = $1 THEN f.user2
+                    ELSE f.user1
+
+            WHERE (
+                f.user1 = $1
+                OR
+                f.user2 = $1
+            )
+            
+            LIMIT 15
+
+            ORDER BY u.username ASC;
             `
         )
+
+        return result.rows;
     }
     catch (err) {
         console.error("Unexpected DB error for user", user_id, err);
+        throw new DatabaseOrServerError();
     }
 }

@@ -273,29 +273,6 @@ router.post("/add-friend", async (req, res) => {
     }
 });
 
-router.get("/friends/:userId", async (req, res) => {
-    const { userId } = req.params;
-
-    try {
-        const result = await pool.query(
-            `
-            SELECT u.id, u.username
-            FROM friends f
-            JOIN users u ON u.id = f.friend_id
-            WHERE f.user_id = $1
-            ORDER BY u.username
-            `,
-            [userId]
-        );
-
-        res.json(result.rows);
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: "Failed to fetch friends" });
-    }
-});
-
-
 router.get("/requests/received/:userId", async (req, res) => {
     const { userId } = req.params;
 

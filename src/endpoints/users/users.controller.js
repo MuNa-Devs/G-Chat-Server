@@ -134,6 +134,11 @@ export async function handleGetFrnds(req, res, next){
 
     try{
         const friends = await getFriends(user_id);
+
+        res.status(201).json({
+            success: true,
+            friends
+        });
     }
     catch (err){
         next(err);
