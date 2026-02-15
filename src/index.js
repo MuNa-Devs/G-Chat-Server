@@ -2,14 +2,18 @@ import express from 'express';
 import cors from 'cors';
 import http from 'http';
 import path from 'path';
+import dotenv from "dotenv";
 
 import getIP from './get_my_ip.js';
 import router from './endpoints/api_utils/router_factory.js';
 import socketSetup from './sockets/socket_comm.js';
 import { globalErrHandler } from './tools/def_error_handler.js';
 
+dotenv.config();
+
 const ip = getIP();
 const app = express();
+console.log("Working directory:", process.cwd());
 
 app.use(cors({
     origin: '*'
