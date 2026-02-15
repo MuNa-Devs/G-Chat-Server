@@ -2,7 +2,8 @@ import {
     DatabaseOrServerError,
     ForbiddenAccess,
     FrndReqTransactionFailed,
-    InvalidUser
+    InvalidUser,
+    NotFound
 } from "../../error_classes/defined_errors.js";
 
 import pool from "../api_utils/db.js";
@@ -13,9 +14,7 @@ export async function getUser(user_id) {
             `
             SELECT
                 u.id, 
-                u.username, 
-                u.email, 
-                u.is_verified, 
+                u.username,
                 u.pfp, 
                 u.department,
                 u.about,
@@ -27,6 +26,9 @@ export async function getUser(user_id) {
             `,
             [user_id]
         );
+
+        if (!result.rowCount)
+            throw new NotFound();
 
         return result.rows[0];
     }
@@ -292,8 +294,13 @@ export async function rejectFrndReq(request_id, user_id) {
                 AND
                 receiver_id = $2
             )
-            `
-        )
+            
+            RETURNING request_id;
+            `,
+            [request_id, user_id]
+        );
+
+        return result.rows[0]?.request_id;
     }
     catch (err){
         console.error("Unexpected DB error for user", user_id, err);

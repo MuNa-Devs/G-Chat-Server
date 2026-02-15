@@ -87,3 +87,14 @@ export function checkFrndReqParams(req, res, next){
 
     next();
 }
+
+export function chkRemoveFrndData(req, res, next){
+    const user_id = req.user_id;
+    const data = req.body;
+
+    if (!data && (!data.userId || !data.friendId))
+        throw new MissingData();
+
+    if (Number(data.userId) !== user_id)
+        throw new ForbiddenAccess();
+}

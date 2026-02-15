@@ -165,6 +165,17 @@ export class InvalidUser extends AppError {
     }
 }
 
+export class NotFound extends AppError{
+
+    constructor(){
+        super(
+            "Data not found or corrupted",
+            404,
+            "NOT_FOUND"
+        );
+    }
+}
+
 export class UnAuthorized extends AppError {
 
     constructor() {

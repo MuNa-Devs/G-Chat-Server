@@ -289,33 +289,6 @@ router.get("/requests/received/:userId", async (req, res) => {
     res.json(result.rows);
 });
 
-router.post("/reject-request", async (req, res) => {
-    const { requestId, userId } = req.body;
-
-    try {
-        const result = await pool.query(
-            `
-            UPDATE friend_requests
-            SET status = 'rejected'
-            WHERE id = $1
-              AND receiver_id = $2
-              AND status = 'pending'
-            `,
-            [requestId, userId]
-        );
-
-        if (result.rowCount === 0) {
-            return res.status(400).json({ message: "Invalid request" });
-        }
-
-        res.json({ success: true });
-
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: "Failed to reject request" });
-    }
-});
-
 router.get("/dms/get-contacts", async (req, res) => {
     try {
         const user_id = req.query.user_id;

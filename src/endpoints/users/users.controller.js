@@ -9,6 +9,7 @@ import {
     getFriends, 
     getSentFrndReqs, 
     getUser, 
+    rejectFrndReq, 
     saveUserDetails, 
     searchUsers, 
     sendFrndReq 
@@ -38,12 +39,9 @@ export async function handleGetUser(req, res, next){
 }
 
 export async function handleSaveDetails(req, res, next){
-    const user_id = Number(req.requested_user_id);
+    const user_id = Number(req.user_id);
 
     try{
-        if (user_id !== req.requesting_user.id)
-            throw new ForbiddenAccess();
-
         req.body.pfp = req.file?.filename || req.body.pfp || null;
         const data = req.body;
 
@@ -98,7 +96,7 @@ export async function handleTransacFrndReqs(req, res, next){
                 break;
 
             case "reject":
-                //
+                response = await rejectFrndReq(data.requestId, data.userId);
 
                 break;
         }
