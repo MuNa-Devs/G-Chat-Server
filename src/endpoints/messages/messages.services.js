@@ -8,7 +8,8 @@ export async function getGlobalChats(user_id, offset){
             SELECT
                 m.*,
                 u.id,
-                u.username
+                u.username,
+                u.pfp
             FROM messages m
 
             JOIN users u

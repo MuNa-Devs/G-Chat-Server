@@ -83,20 +83,24 @@ export async function searchUsers(user_id, search_query) {
     try {
         const search_string = `${search_query}%`;
 
-        // Complete this query tomorrow. Good morning BTW
         const result = await pool.query(
             `
             SELECT
-                id,
-                username,
-                pfp,
+                u.id,
+                u.username,
+                u.pfp,
                 EXISTS (
-                    SELECT friend_id
-                    FROM friends
+                    SELECT
+                        f.friend_id
+                    FROM friends f
 
-                    WHERE 
+                    WHERE (
+                        f.user1 = LEAST($2, u.id)
+                        AND
+                        f.user2 = GREATEST($2, u.id)
+                    )
                 ) AS is_friend
-            FROM users
+            FROM users u
 
             WHERE
                 username ILIKE $1
@@ -130,9 +134,9 @@ export async function sendFrndReq(sender, receiver) {
                 DELETE FROM friend_requests fr
                 
                 WHERE (
-                    sender_id = $2
+                    sender = $2
                     AND
-                    receiver_id = $1
+                    receiver = $1
                 )
 
                 RETURNING request_id
@@ -179,9 +183,9 @@ export async function sendFrndReq(sender, receiver) {
                 FROM friend_requests fr
 
                 WHERE (
-                    fr.sender_id = $1
+                    fr.sender = $1
                     AND
-                    fr.receiver_id = $2
+                    fr.receiver = $2
                 )
             )
 
@@ -190,7 +194,7 @@ export async function sendFrndReq(sender, receiver) {
             [sender, receiver]
         );
 
-        if (!result.rows[0].request_id)
+        if (!result.rowCount)
             throw new FrndReqTransactionFailed();
 
         await db_instance.query('COMMIT');
@@ -225,12 +229,12 @@ export async function acceptFrndReq(request_id, user_id) {
             WHERE (
                 request_id = $1
                 AND
-                NOT receiver_id = $2
+                receiver_id = $2
             )
 
             RETURNING
-                sender_id,
-                receiver_id;
+                sender,
+                receiver;
             `,
             [request_id, user_id]
         );
@@ -257,10 +261,12 @@ export async function acceptFrndReq(request_id, user_id) {
             [user1, user2]
         );
 
-        if (!friend_result.rows[0].friend_id)
+        if (!friend_result.rowCount)
             throw new FrndReqTransactionFailed();
 
         await db_instance.query('COMMIT');
+
+        return friend_result.rows[0].friend_id;
     }
     catch (err) {
         await db_instance.query('ROLLBACK');
@@ -276,8 +282,23 @@ export async function acceptFrndReq(request_id, user_id) {
     }
 }
 
-export async function rejectFrndReq() {
-    //
+export async function rejectFrndReq(request_id, user_id) {
+    try{
+        const result = await pool.query(
+            `
+            DELETE FROM friend_requests
+            WHERE (
+                request_id = $1
+                AND
+                receiver_id = $2
+            )
+            `
+        )
+    }
+    catch (err){
+        console.error("Unexpected DB error for user", user_id, err);
+        throw new DatabaseOrServerError();
+    }
 }
 
 export async function getSentFrndReqs(user_id) {
@@ -286,8 +307,8 @@ export async function getSentFrndReqs(user_id) {
             `
             SELECT
                 request_id,
-                sender_id AS user_id,
-                receiver_id,
+                sender AS user_id,
+                receiver AS receiver_id,
                 sent_at
             FROM friend_requests
 
@@ -313,10 +334,34 @@ export async function getFriends(user_id) {
         const result = await pool.query(
             `
             SELECT
+                f.friend_id,
+                u.id,
+                u.username,
+                u.pfp,
+            FROM friends f
+
+            JOIN users u
+            ON
+                u.id = CASE
+                    WHEN f.user1 = $1 THEN f.user2
+                    ELSE f.user1
+
+            WHERE (
+                f.user1 = $1
+                OR
+                f.user2 = $1
+            )
+            
+            LIMIT 15
+
+            ORDER BY u.username ASC;
             `
         )
+
+        return result.rows;
     }
     catch (err) {
         console.error("Unexpected DB error for user", user_id, err);
+        throw new DatabaseOrServerError();
     }
 }

@@ -1,50 +1,51 @@
-INSERT INTO friend_requests
-    (sender_id, receiver_id)
+SELECT
+    u.id,
+    u.username,
+    u.pfp,
+    (f.friend_id is NOT NULL) AS is_friend
 
-SELECT $1, $2
+FROM users u
 
-WHERE (
-    NOT EXISTS (
-        INSERT INTO friends
-            (user1, user2)
-        
-        SELECT LEAST($1, $2), GREATEST($1, $2)
-
-        WHERE (
-            EXISTS (
-                SELECT fr.request_id
-                FROM friend_requests fr
-
-                WHERE (
-                    fr.sender_id = $2
-                    AND
-                    fr.receiver_id = $1
-                )
-            )
-            AND
-            NOT EXISTS (
-                SELECT f.id
-                FROM friends f
-
-                WHERE (
-                    f.user1 = LEAST($1, $2)
-                    AND
-                    f.user2 = GREATEST($1, $2)
-                )
-            )
-        )
-
-        RETURNING friend_id
-    )
-    AND
-    NOT EXISTS (
-        SELECT request_id
-        FROM friend_requests
-
-        WHERE (
-            sender_id = $1
-            AND
-            receiver_id = $2
-        )
-    )
+LEFT JOIN friends f
+ON (
+    (f.user1 = u.id AND f.user2 = $2)
+    OR
+    (f.user1 = %2 AND f.user2 = u.id)
 )
+
+WHERE
+    username ILIKE $1
+    AND
+    NOT id = $2
+
+LIMIT 15
+
+ORDER BY username ASC;
+
+-- OR
+
+SELECT
+    u.id,
+    u.username,
+    u.pfp,
+    EXISTS (
+        SELECT
+            f.friend_id
+        FROM friends f
+
+        WHERE (
+            f.user1 = LEAST($2, u.id)
+            AND
+            f.user2 = GREATEST($2, u.id)
+        )
+    )
+FROM users u
+
+WHERE
+    username ILIKE $1
+    AND
+    NOT id = $2
+
+LIMIT 15
+
+ORDER BY username ASC;

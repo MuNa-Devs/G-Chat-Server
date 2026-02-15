@@ -16,7 +16,7 @@ export function checkUserId(req, res, next){
     if (!Number.isInteger(user_id) || user_id < 1)
         throw new InvalidData();
 
-    req.user_id = user_id; // user to fetch
+    req.user_id = user_id;
 
     next();
 }
@@ -68,7 +68,7 @@ export function checkFrndReqParams(req, res, next){
 
             break;
 
-        case "accept":
+        case "accept" || "reject":
             if (!data.requestId || !data.userId)
                 throw new MissingData();
 
@@ -77,11 +77,6 @@ export function checkFrndReqParams(req, res, next){
 
             if (data.userId !== user_id)
                 throw new ForbiddenAccess();
-
-            break;
-
-        case "reject":
-            //
 
             break;
     }
