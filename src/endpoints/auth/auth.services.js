@@ -41,8 +41,8 @@ export async function registerUser({ username, email, password }) {
     }
 }
 
-export async function authorizeUser({ email, password }){
-    try{
+export async function authorizeUser({ email, password }) {
+    try {
         const result = await pool.query(
             `
             SELECT
@@ -58,7 +58,7 @@ export async function authorizeUser({ email, password }){
         if (result.rowCount === 0)
             throw new InvalidUser();
 
-        if (result.rowCount > 1){
+        if (result.rowCount > 1) {
             console.error("Data integrity issue: duplicate emails found", email);
             throw new DBIntegrityError();
         }
@@ -70,11 +70,71 @@ export async function authorizeUser({ email, password }){
 
         return { id: result.rows[0].id, email: result.rows[0].email };
     }
-    catch (err){
+    catch (err) {
         if (err.is_expected)
             throw err;
 
         console.error("Unexpected error in authorizeUser:", err);
+        throw new DatabaseOrServerError();
+    }
+}
+
+export const verifyOtpService = async (email, otp) => {
+
+    const result = await pool.query(
+        "SELECT otp FROM users WHERE email = $1",
+        [email]
+    );
+
+    if (result.rows.length === 0) {
+        throw new Error("User not found");
+    }
+
+    const user = result.rows[0];
+
+    if (user.verification_otp !== otp) {
+        throw new Error("Invalid OTP");
+    }
+
+    if (new Date(user.otp_expiry) < new Date()) {
+        throw new Error("OTP expired");
+    }
+
+    await pool.query(
+        `UPDATE users
+     SET is_verified = true,
+         verification_otp = NULL,
+         otp_expiry = NULL
+     WHERE email = $1`,
+        [email]
+    );
+
+    return { message: "Email verified successfully!" };
+};
+
+export async function storeOtp(otp, expiry, email) {
+    try {
+        const result = await pool.query(
+            `
+            UPDATE users 
+            SET 
+                otp = $1,
+                otp_expiry = $2
+            
+            WHERE email = $3
+            RETURNING id;
+            `,
+            [otp, expiry, email]
+        );
+
+        if (result.rowCount === 0) {
+            throw new InvalidUser();
+        }
+
+        return result.rows[0];
+    }
+    catch (err) {
+        console.error("Unexpected DB error for user", email, err);
         throw new DatabaseOrServerError();
     }
 }

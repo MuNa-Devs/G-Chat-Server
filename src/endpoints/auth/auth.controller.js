@@ -5,6 +5,11 @@ import {
 
 import jwt from 'jsonwebtoken';
 import nodemailer from "nodemailer";
+import { verifyOtpService } from "./auth.services.js";
+import crypto from "crypto";
+import pool from '../api_utils/db.js';
+import { RegistrationFailed } from '../../error_classes/defined_errors.js';
+import { transporter } from '../api_utils/mailer.js';
 
 export async function handleUserReg(req, res, next) {
     try{
@@ -76,5 +81,57 @@ export const testMail = async (req, res) => {
     } catch (error) {
         console.log(error);
         res.status(500).json({ error: "Mail failed" });
+    }
+};
+
+
+export const verifyOtp = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    const result = await verifyOtpService(email, otp);
+
+    return res.status(200).json({
+      message: result.message,
+    });
+
+  } catch (error) {
+    return res.status(400).json({
+      message: error.message,
+    });
+  }
+};
+
+export const sendOtp = async (req, res) => {
+    try {
+        console.log("Request body:", req.body);  // <-- add this line
+        console.log("Request query:", req.query);  // <-- add this line
+
+        const { email } = req.body;
+
+        // Generate 6-digit OTP
+        const otp = crypto.randomInt(100000, 999999);
+
+        // Set expiry: 5 minutes from now
+        const expiry = new Date(Date.now() + 5 * 60 * 1000);
+
+        const status = await storeOtp(otp, expiry, email) ? true : false;
+
+        if (!status) {
+            throw new RegistrationFailed();
+        }
+
+        await transporter.sendMail({
+            from: process.env.EMAIL,
+            to: email,
+            subject: "Your OTP for G-Chat",
+            text: `Your OTP is: ${otp}. It will expire in 5 minutes.`
+        });
+
+        res.json({ message: "OTP sent to your email" });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Failed to send OTP" });
     }
 };
