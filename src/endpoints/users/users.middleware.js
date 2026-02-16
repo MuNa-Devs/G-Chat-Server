@@ -1,10 +1,10 @@
-import { 
+import {
     ForbiddenAccess,
-    InvalidData, 
-    MissingData 
+    InvalidData,
+    MissingData
 } from "../../error_classes/defined_errors.js";
 
-export function checkUserId(req, res, next){
+export function checkUserId(req, res, next) {
     const user_id = Number(req.query.user_id);
 
     if (!user_id)
@@ -21,7 +21,7 @@ export function checkUserId(req, res, next){
     next();
 }
 
-export function checkSearchUserParams(req, res, next){
+export function checkSearchUserParams(req, res, next) {
     const user_id = Number(req.query.user_id);
     const query = req.query.query;
 
@@ -40,7 +40,7 @@ export function checkSearchUserParams(req, res, next){
     next();
 }
 
-export function checkFrndReqParams(req, res, next){
+export function checkFrndReqParams(req, res, next) {
     const user_id = Number(req.query.user_id);
     const action = req.query.action;
     const data = req.body;
@@ -55,7 +55,7 @@ export function checkFrndReqParams(req, res, next){
         throw new InvalidData();
 
     // Check respective data
-    switch (action){
+    switch (action) {
         case "send":
             if (!data.senderId || !data.receiverId)
                 throw new MissingData();
@@ -69,8 +69,7 @@ export function checkFrndReqParams(req, res, next){
             break;
 
         case "accept":
-case "reject":
-            
+        case "reject":
             data.requestId = Number(data.requestId);
             data.userId = Number(data.userId);
 
@@ -78,7 +77,7 @@ case "reject":
                 throw new MissingData();
 
             if (!Number.isInteger(data.requestId) || !Number.isInteger(data.userId))
-        throw new InvalidData();
+                throw new InvalidData();
 
             if (data.requestId < 1 || data.userId < 1)
                 throw new InvalidData();
@@ -96,7 +95,7 @@ case "reject":
     next();
 }
 
-export function chkRemoveFrndData(req, res, next){
+export function chkRemoveFrndData(req, res, next) {
     const user_id = req.user_id;
     const data = req.body;
 

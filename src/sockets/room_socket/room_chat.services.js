@@ -58,22 +58,6 @@ export async function saveRoomMessage(room_id, user_id, message_form) {
         const file_vals = [message_id];
         const query_placeholders = [];
 
-        // let file_index = 0;
-
-        // for (const file of message_form.files_list) {
-        //     file_vals.push(file.filename);
-        //     file_vals.push(file.file_url);
-        //     file_vals.push(file.mime_type);
-
-        //     const something = file_index * 3;
-
-        //     query_placeholders.push(
-        //         `($1, $${something + 2}, $${something + 3}, $${something + 4})`
-        //     );
-
-        //     file_index++;
-        // }
-
         let next_free_param = 2;
 
         for (const file of message_form.files_list){

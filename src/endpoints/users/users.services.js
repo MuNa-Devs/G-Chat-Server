@@ -169,7 +169,7 @@ export async function sendFrndReq(sender, receiver) {
             [sender, receiver]
         );
 
-        if (frnd_res.rowCount){
+        if (frnd_res.rowCount) {
             await db_instance.query('COMMIT');
             throw new FrndReqTransactionFailed();
         }
@@ -213,7 +213,7 @@ export async function sendFrndReq(sender, receiver) {
         console.error("Unexpected DB error for user", sender, err);
         throw new DatabaseOrServerError();
     }
-    finally{
+    finally {
         db_instance.release();
     }
 }
@@ -236,7 +236,7 @@ export async function acceptFrndReq(request_id, user_id) {
             WHERE (
                 request_id = $1
                 AND
-                receiver= $2
+                receiver = $2
             )
 
             RETURNING
@@ -254,22 +254,21 @@ export async function acceptFrndReq(request_id, user_id) {
 
         if (user1 !== user_id)
             throw new ForbiddenAccess();
-        console.log("Types:", typeof user1, typeof user2);
-console.log("Values:", user1, user2);
 
-       const friend_result = await db_instance.query(
-        
+        const friend_result = await db_instance.query(
+            `
+            INSERT INTO friends
+                (user1, user2)
 
-    `
-    INSERT INTO friends (user1, user2)
-    VALUES (
-        LEAST($1::int, $2::int),
-        GREATEST($1::int, $2::int)
-    )
-    RETURNING friend_id;
-    `,
-    [user1, user2]
-);
+            VALUES (
+                LEAST($1::int, $2::int),
+                GREATEST($1::int, $2::int)
+            )
+                
+            RETURNING friend_id;
+            `,
+            [user1, user2]
+        );
 
         if (!friend_result.rowCount)
             throw new FrndReqTransactionFailed();
@@ -287,13 +286,13 @@ console.log("Values:", user1, user2);
         console.error("Unexpected DB error for user", user_id, err);
         throw new DatabaseOrServerError();
     }
-    finally{
+    finally {
         db_instance.release();
     }
 }
 
 export async function rejectFrndReq(request_id, user_id) {
-    try{
+    try {
         const result = await pool.query(
             `
             DELETE FROM friend_requests
@@ -310,7 +309,7 @@ export async function rejectFrndReq(request_id, user_id) {
 
         return result.rows[0]?.request_id;
     }
-    catch (err){
+    catch (err) {
         console.error("Unexpected DB error for user", user_id, err);
         throw new DatabaseOrServerError();
     }
@@ -350,8 +349,8 @@ export async function getSentFrndReqs(user_id) {
     }
 }
 
-export async function getRecFrndReqs(user_id){
-    try{
+export async function getRecFrndReqs(user_id) {
+    try {
         const result = await pool.query(
             `
             SELECT
@@ -378,7 +377,7 @@ export async function getRecFrndReqs(user_id){
 
         return result.rows;
     }
-    catch (err){
+    catch (err) {
         console.error("Unexpected DB error for user", user_id, err);
         throw new DatabaseOrServerError();
     }
@@ -423,8 +422,8 @@ export async function getFriends(user_id) {
     }
 }
 
-export async function removeFriend(friend_id, user_id){
-    try{
+export async function removeFriend(friend_id, user_id) {
+    try {
         const result = await pool.query(
             `
             DELETE FROM friends
@@ -441,7 +440,7 @@ export async function removeFriend(friend_id, user_id){
 
         return result.rows[0];
     }
-    catch (err){
+    catch (err) {
         console.error("Unexpected DB error for user", user_id, err);
         throw new DatabaseOrServerError();
     }
