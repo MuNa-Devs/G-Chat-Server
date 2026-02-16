@@ -23,6 +23,6 @@ auth_router.get("/test-mail", testMail);
 
 auth_router.post("/verify-otp", verifyOtp);
 
-auth_router.post("/send-otp", sendOtp);
+auth_router.post("/send-otp", sendOtp);// auth_router.post("/refresh-token", refreshToken);
 
 export default auth_router;
