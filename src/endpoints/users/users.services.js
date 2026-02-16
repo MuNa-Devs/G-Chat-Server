@@ -219,6 +219,10 @@ export async function sendFrndReq(sender, receiver) {
 }
 
 export async function acceptFrndReq(request_id, user_id) {
+    user_id = Number(user_id);
+    request_id = Number(request_id);
+
+
     const db_instance = await pool.connect();
 
     try {
@@ -232,7 +236,7 @@ export async function acceptFrndReq(request_id, user_id) {
             WHERE (
                 request_id = $1
                 AND
-                receiver_id = $2
+                receiver= $2
             )
 
             RETURNING
@@ -242,27 +246,30 @@ export async function acceptFrndReq(request_id, user_id) {
             [request_id, user_id]
         );
 
-        const user1 = result.rows[0]?.receiver_id;
-        const user2 = result.rows[0]?.sender_id;
+        const user1 = Number(result.rows[0]?.receiver);
+        const user2 = Number(result.rows[0]?.sender);
 
         if (!user1 || !user2)
             throw new FrndReqTransactionFailed();
 
         if (user1 !== user_id)
             throw new ForbiddenAccess();
+        console.log("Types:", typeof user1, typeof user2);
+console.log("Values:", user1, user2);
 
-        const friend_result = await db_instance.query(
-            `
-            INSERT INTO friends
-                (user1, user2)
+       const friend_result = await db_instance.query(
+        
 
-            VALUES
-                (LEAST($1, $2), GREATEST($1, $2))
-            
-            RETURNING friend_id;
-            `,
-            [user1, user2]
-        );
+    `
+    INSERT INTO friends (user1, user2)
+    VALUES (
+        LEAST($1::int, $2::int),
+        GREATEST($1::int, $2::int)
+    )
+    RETURNING friend_id;
+    `,
+    [user1, user2]
+);
 
         if (!friend_result.rowCount)
             throw new FrndReqTransactionFailed();

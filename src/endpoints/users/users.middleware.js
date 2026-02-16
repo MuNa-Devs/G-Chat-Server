@@ -68,9 +68,17 @@ export function checkFrndReqParams(req, res, next){
 
             break;
 
-        case "accept" || "reject":
+        case "accept":
+case "reject":
+            
+            data.requestId = Number(data.requestId);
+            data.userId = Number(data.userId);
+
             if (!data.requestId || !data.userId)
                 throw new MissingData();
+
+            if (!Number.isInteger(data.requestId) || !Number.isInteger(data.userId))
+        throw new InvalidData();
 
             if (data.requestId < 1 || data.userId < 1)
                 throw new InvalidData();
