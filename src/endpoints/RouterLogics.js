@@ -191,8 +191,7 @@ export async function getRoomMessages(r_id){
 
             GROUP BY
                 rm.message_id,
-                u.username,
-                u.pfp
+                u.id
 
             ORDER BY rm.sent_at ASC
 

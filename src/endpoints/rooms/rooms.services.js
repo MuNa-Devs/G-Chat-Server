@@ -1,5 +1,6 @@
-import { 
-    DatabaseOrServerError 
+import {
+    DatabaseOrServerError,
+    NotFound
 } from "../../error_classes/defined_errors.js";
 
 import pool from "../../../trash/db.js";
@@ -11,39 +12,39 @@ export async function getRooms(constraint, user_id, last_seen_id, room_id) {
         switch (constraint) {
             case '*':
                 result = await pool.query(
-                `
-                SELECT
-                    r.*,
-                    COUNT(rm.user_id) AS popl_size,
-                    u.username,
-                    EXISTS(
-                        SELECT 
-                            rm.r_id
-                        FROM room_members rm
+                    `
+                    SELECT
+                        r.*,
+                        COUNT(rm.user_id) AS popl_size,
+                        u.username,
+                        EXISTS(
+                            SELECT 
+                                rm.r_id
+                            FROM room_members rm
 
-                        WHERE rm.user_id = $1
-                    ) AS is_member
-                FROM rooms r
+                            WHERE rm.user_id = $1
+                        ) AS is_member
+                    FROM rooms r
 
-                JOIN users u
-                ON 
-                    r.r_aid = u.id
+                    JOIN users u
+                    ON 
+                        r.r_aid = u.id
 
-                LEFT JOIN room_members rm
-                ON
-                    r.r_id = rm.r_id
+                    LEFT JOIN room_members rm
+                    ON
+                        r.r_id = rm.r_id
 
-                WHERE
-                    r.r_type = 'public'
-                    AND
-                    r.r_id < $2
+                    WHERE
+                        r.r_type = 'public'
+                        AND
+                        r.r_id < $2
 
-                GROUP BY r.r_id, u.username
+                    GROUP BY r.r_id, u.username
 
-                ORDER BY r.r_id DESC
+                    ORDER BY r.r_id DESC
 
-                LIMIT 15
-                `,
+                    LIMIT 15
+                    `,
                     [user_id, last_seen_id]
                 );
 
@@ -51,34 +52,34 @@ export async function getRooms(constraint, user_id, last_seen_id, room_id) {
 
             case 'my':
                 result = await pool.query(
-                `
-                SELECT
-                    r.*,
-                    COUNT(rm.user_id),
-                    u.username
-                FROM rooms r
+                    `
+                    SELECT
+                        r.*,
+                        COUNT(rm.user_id),
+                        u.username
+                    FROM rooms r
 
-                JOIN users u
-                ON 
-                    r.r_aid = u.id
+                    JOIN users u
+                    ON 
+                        r.r_aid = u.id
 
-                LEFT JOIN room_members rm
-                ON
-                    r.r_id = rm.r_id
+                    LEFT JOIN room_members rm
+                    ON
+                        r.r_id = rm.r_id
 
-                WHERE 
-                    r.r_aid = $1 
-                    OR 
-                    rm.user_id = $1
-                    AND
-                    r.r_id < $2
+                    WHERE 
+                        r.r_aid = $1 
+                        OR 
+                        rm.user_id = $1
+                        AND
+                        r.r_id < $2
 
-                GROUP BY r.r_id, u.username
+                    GROUP BY r.r_id, u.username
 
-                ORDER BY r.r_id DESC
+                    ORDER BY r.r_id DESC
 
-                LIMIT 15
-                `,
+                    LIMIT 15
+                    `,
                     [user_id, last_seen_id]
                 );
 
@@ -86,42 +87,53 @@ export async function getRooms(constraint, user_id, last_seen_id, room_id) {
 
             case 'a':
                 result = await pool.query(
-                `
-                SELECT
-                    r.*,
-                    COUNT(rm.user_id) AS popl_size,
-                    u.username AS admin_name,
-                    u.*
-                FROM rooms r
+                    `
+                    SELECT
+                        r.*,
+                        COUNT(rm.user_id) AS popl_size,
+                        u.username AS admin_name,
+                        u.id,
+                        u.pfp,
+                        u.department,
+                        u.about,
+                        u.phone,
+                        u.personal_email
+                    FROM rooms r
 
-                JOIN users u
-                ON 
-                    r.r_aid = u.id
+                    JOIN users u
+                    ON 
+                        r.r_aid = u.id
 
-                LEFT JOIN room_members rm
-                ON
-                    r.r_id = rm.r_id
+                    LEFT JOIN room_members rm
+                    ON
+                        r.r_id = rm.r_id
 
-                WHERE r.r_id = $1
+                    WHERE r.r_id = $1
 
-                GROUP BY r.r_id, u.id;
-                `,
+                    GROUP BY r.r_id, u.id;
+                    `,
                     [room_id]
                 );
 
+                if (!result.rowCount)
+                    throw new NotFound();
+
                 break;
         }
+
+        return result.rows;
     }
-    catch (err){
+    catch (err) {
+        if (err.is_expected)
+            throw err;
+
         console.error("Unexpected DB error for user", user_id, err);
         DatabaseOrServerError();
     }
-
-    return result.rows;
 }
 
-export async function getSearchedRooms(search_query, last_seen_id, user_id){
-    try{
+export async function getSearchedRooms(search_query, last_seen_id, user_id) {
+    try {
         const search_string = `${search_query}%`;
 
         const result = await pool.query(
@@ -158,16 +170,16 @@ export async function getSearchedRooms(search_query, last_seen_id, user_id){
 
         return result.rows;
     }
-    catch (err){
+    catch (err) {
         console.error("Unexpected DB error for user", user_id, err);
         throw new DatabaseOrServerError();
     }
 }
 
-export async function createRoom(user_id, data){
+export async function createRoom(user_id, data) {
     const db_instance = await pool.connect();
 
-    try{
+    try {
         db_instance.query('BEGIN');
 
         const room_res = await db_instance.query(
@@ -208,13 +220,13 @@ export async function createRoom(user_id, data){
 
         return room_id;
     }
-    catch (err){
+    catch (err) {
         db_instance.query('ROLLBACK');
 
         console.error("Unexpected DB error for user", user_id, err);
         throw new DatabaseOrServerError();
     }
-    finally{
+    finally {
         db_instance.release();
     }
 }

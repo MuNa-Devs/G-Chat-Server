@@ -35,21 +35,6 @@ const file_storage = multer.diskStorage({
 
 const upload = multer({ storage: file_storage });
 
-router.get("/rooms/get-messages", async (req, res) => {
-    try {
-        res.json({
-            status: true,
-            messages: await getRoomMessages(parseInt(req.query.room_id))
-        });
-    }
-    catch {
-        res.json({
-            status: false,
-            message: err
-        });
-    }
-})
-
 router.post("/rooms/room-message", upload.array("files"), async (req, res) => {
     try {
         const files = req.files;
@@ -91,25 +76,6 @@ router.post("/rooms/room-message", upload.array("files"), async (req, res) => {
         });
     }
 })
-
-router.post("/rooms/create", upload.single("room_icon"), async (req, res) => {
-    const body = req.body;
-    const icon = req.file?.filename || null;
-
-    const data = {
-        ...body,
-        room_icon: icon
-    }
-
-    const r_id = await createRoom(data);
-    const status = await roomMembership(r_id, body.room_aid);
-
-    res.json({
-        status: status,
-        room_id: r_id,
-        icon_name: data.room_icon
-    });
-});
 
 router.post("/rooms/update", upload.single("room_icon"), async (req, res) => {
     try {

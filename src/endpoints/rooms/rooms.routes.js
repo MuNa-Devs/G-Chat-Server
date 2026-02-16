@@ -2,6 +2,7 @@ import { Router } from "express";
 import { authorizeToken } from "../auth/auth.middleware.js";
 
 import { 
+    checkGetARoomParams,
     checkGetRoomParams, 
     checkModifyRoomParams, 
     checkSearchRoomParams 
@@ -9,6 +10,7 @@ import {
 
 import { 
     handleGetAllRooms, 
+    handleGetARoom, 
     handleGetMyRooms, 
     handleModifyRooms, 
     handleSearchRooms
@@ -35,8 +37,9 @@ rooms_router.get(
 rooms_router.get(
     "/get-room",
     authorizeToken,
-    //
-)
+    checkGetARoomParams,
+    handleGetARoom
+);
 
 rooms_router.get(
     "/search",

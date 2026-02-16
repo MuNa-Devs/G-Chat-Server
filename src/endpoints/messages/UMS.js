@@ -1,0 +1,31 @@
+
+// UMS -> Universal Message Structure
+// Imposed structure: {
+//  identifiers: {...},
+//  sender_details: {...},
+//  text: "...",
+//  files_list: [...],
+//  timestamp: "...{UTC}"
+// }
+
+export default class UMS {
+
+    static roomMessage(object) {
+        message = {
+            identifiers: {
+                message_id: object.message_id,
+                room_id: object.r_id
+            },
+            sender_details: {
+                sender_id: object.user_id,
+                sender_name: object.username,
+                sender_pfp: object.pfp
+            },
+            text: object.message,
+            files_list: object.files,
+            timestamp: object.sent_at
+        };
+
+        return message;
+    }
+}

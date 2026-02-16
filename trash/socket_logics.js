@@ -1,4 +1,4 @@
-import pool from "../../trash/db.js";
+import pool from "./db.js";
 
 export async function saveRoomMessage(uid, rid, msg, time){
     try{

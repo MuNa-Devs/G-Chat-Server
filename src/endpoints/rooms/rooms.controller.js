@@ -34,6 +34,23 @@ export async function handleGetAllRooms(req, res, next){
     }
 }
 
+export async function handleGetARoom(req, res, next){
+    const user_id = req.user_id;
+    const room_id = req.room_id;
+
+    try{
+        const room_info_rows = await getRooms('a', user_id, 0, room_id);
+
+        res.status(201).json({
+            success: true,
+            room_info: room_info_rows[0]
+        });
+    }
+    catch (err){
+        next(err);
+    }
+}
+
 export async function handleSearchRooms(req, res, next){
     const user_id = req.user_id;
     const last_seen_id = req.last_seen_id
