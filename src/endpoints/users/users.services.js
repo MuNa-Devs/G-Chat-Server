@@ -299,7 +299,7 @@ export async function rejectFrndReq(request_id, user_id) {
             WHERE (
                 request_id = $1
                 AND
-                receiver_id = $2
+                receiver = $2
             )
             
             RETURNING request_id;
