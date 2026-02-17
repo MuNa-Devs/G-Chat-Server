@@ -1,6 +1,7 @@
 import {
     DatabaseOrServerError,
-    NotFound
+    NotFound,
+    RoomSizeExceeded
 } from "../../error_classes/defined_errors.js";
 
 import pool from "../../../trash/db.js";
@@ -22,7 +23,11 @@ export async function getRooms(constraint, user_id, last_seen_id, room_id) {
                                 rm.r_id
                             FROM room_members rm
 
-                            WHERE rm.user_id = $1
+                            WHERE (
+                                rm.user_id = $1
+                                AND
+                                rm.r_id = r.r_id
+                            )
                         ) AS is_member
                     FROM rooms r
 
@@ -56,7 +61,18 @@ export async function getRooms(constraint, user_id, last_seen_id, room_id) {
                     SELECT
                         r.*,
                         COUNT(rm.user_id),
-                        u.username
+                        u.username,
+                        EXISTS(
+                            SELECT 
+                                rm.r_id
+                            FROM room_members rm
+
+                            WHERE (
+                                rm.user_id = $1
+                                AND
+                                rm.r_id = r.r_id
+                            )
+                        ) AS is_member
                     FROM rooms r
 
                     JOIN users u
@@ -93,7 +109,7 @@ export async function getRooms(constraint, user_id, last_seen_id, room_id) {
                         COUNT(rm.user_id) AS popl_size,
                         u.username AS admin_name,
                         u.id,
-                        u.pfp,
+                        u.pfp AS admin_pfp,
                         u.department,
                         u.about,
                         u.phone,
@@ -132,6 +148,34 @@ export async function getRooms(constraint, user_id, last_seen_id, room_id) {
     }
 }
 
+export async function getRoomMembers(room_id, user_id){
+    try{
+        const result = await pool.query(
+            `
+            SELECT DISTINCT
+                u.id,
+                u.username,
+                u.department,
+                u.pfp
+            FROM room_members rm
+
+            JOIN users u
+            ON
+                rm.user_id = u.id
+
+            WHERE rm.r_id = $1;
+            `,
+            [room_id]
+        );
+
+        return result.rows;
+    }
+    catch (err){
+        console.error("Unexpected DB error for user", user_id, err);
+        DatabaseOrServerError();
+    }
+}
+
 export async function getSearchedRooms(search_query, last_seen_id, user_id) {
     try {
         const search_string = `${search_query}%`;
@@ -141,7 +185,18 @@ export async function getSearchedRooms(search_query, last_seen_id, user_id) {
             SELECT
                 r.*,
                 COUNT(rm.r_id) AS popl_size,
-                u.username
+                u.username,
+                EXISTS(
+                    SELECT 
+                        rm.r_id
+                    FROM room_members rm
+
+                    WHERE (
+                        rm.user_id = $1
+                        AND
+                        rm.r_id = r.r_id
+                    )
+                ) AS is_member
             FROM rooms r
 
             JOIN users u
@@ -228,5 +283,75 @@ export async function createRoom(user_id, data) {
     }
     finally {
         db_instance.release();
+    }
+}
+
+export async function joinRoom(room_id, user_id){
+    try{
+        const result = await pool.query(
+            `
+            INSERT INTO room_members 
+                (r_id, user_id)
+
+            SELECT $1::INT, $2
+            FROM rooms r
+
+            LEFT JOIN room_members rm
+            ON
+                r.r_id = rm.r_id
+
+            WHERE (
+                r.join_pref = 'Anyone Can Join'
+                AND
+                r.r_id = $1
+            )
+
+            GROUP BY r.r_id, r.r_size
+
+            HAVING COUNT(rm.user_id) < r.r_size;
+            `,
+            [room_id, user_id]
+        );
+
+        if (!result.rowCount)
+            throw new RoomSizeExceeded();
+
+        return true;
+    }
+    catch (err){
+        if (err.is_expected)
+            throw err;
+
+        console.error("Unexpected DB error for user", user_id, err);
+        throw new DatabaseOrServerError();
+    }
+}
+
+export async function leaveRoom(room_id, user_id){
+    try{
+        const result = await pool.query(
+            `
+            DELETE
+            FROM room_members
+
+            WHERE (
+                r_id = $1
+                AND
+                user_id = $2
+            )
+
+            RETURNING 1;
+            `,
+            [room_id, user_id]
+        );
+
+        if (!result.rowCount)
+            throw new DatabaseOrServerError();
+
+        return true;
+    }
+    catch (err){
+        console.error("Unexpected DB error for user", user_id, err);
+        throw new DatabaseOrServerError();
     }
 }

@@ -198,6 +198,17 @@ export class ForbiddenAccess extends AppError{
     }
 }
 
+export class RoomSizeExceeded extends AppError{
+
+    constructor(){
+        super(
+            "Room is full",
+            409,
+            "ROOM_FULL"
+        );
+    }
+}
+
 export class InvalidJWT extends AppError {
 
     constructor() {

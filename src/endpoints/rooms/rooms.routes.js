@@ -9,9 +9,13 @@ import {
 } from "./rooms.middleware.js";
 
 import { 
+    checkMembership,
     handleGetAllRooms, 
     handleGetARoom, 
     handleGetMyRooms, 
+    handleGetRoomMembers, 
+    handleJoinRoom, 
+    handleLeaveRoom, 
     handleModifyRooms, 
     handleSearchRooms
 } from "./rooms.controller.js";
@@ -19,6 +23,13 @@ import {
 import { upload } from "../api_utils/file_storage.js";
 
 const rooms_router = Router();
+
+rooms_router.get(
+    "/is_member",
+    authorizeToken,
+    checkGetARoomParams,
+    checkMembership
+);
 
 rooms_router.get(
     "/my-rooms", 
@@ -42,6 +53,13 @@ rooms_router.get(
 );
 
 rooms_router.get(
+    "/members",
+    authorizeToken,
+    checkGetARoomParams,
+    handleGetRoomMembers
+);
+
+rooms_router.get(
     "/search",
     authorizeToken,
     checkSearchRoomParams,
@@ -54,6 +72,20 @@ rooms_router.post(
     upload.single("room_icon"),
     checkModifyRoomParams,
     handleModifyRooms
+);
+
+rooms_router.get(
+    "/join",
+    authorizeToken,
+    checkGetARoomParams,
+    handleJoinRoom
+);
+
+rooms_router.get(
+    "/leave",
+    authorizeToken,
+    checkGetARoomParams,
+    handleLeaveRoom
 );
 
 export default rooms_router;
