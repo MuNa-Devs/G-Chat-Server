@@ -7,14 +7,14 @@ export async function saveGlobalMsg(user_id, message){
         const result = await pool.query(
             `
             INSERT INTO messages
-                (user_id, message, created_at)
+                (user_id, message)
 
             VALUES
-                ($1, $2, $3)
+                ($1, $2)
 
             RETURNING created_at;
             `,
-            [user_id, message, Date.now()]
+            [user_id, message]
         );
 
         if (!result.rowCount)

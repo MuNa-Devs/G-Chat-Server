@@ -18,8 +18,10 @@ export default function socketSetup(server) {
     io.use((socket, next) => {
         const token = socket.handshake.auth.token;
 
-        if (!token)
+        if (!token) {
+            console.log("No jwt included");
             return next(new UnAuthorized());
+        }
 
         try {
             const user = jwt.verify(token, process.env.JWT_SECRET);
@@ -32,8 +34,15 @@ export default function socketSetup(server) {
     });
 
     io.on("connection", async (socket) => {
-        socket.user_details = await getUser(socket.user.id);
-        user_socket_map.set(socket.user.id, socket);
+
+        try {
+            socket.user_details = await getUser(socket.user.id);
+        }
+        catch (err) {
+            socket.emit("socket_error", { code: "FORBIDDEN_ACCESS" });
+        }
+
+        console.log("connection established", socket.user.id);
 
         globalChat(io, socket);
         roomChat(io, socket);

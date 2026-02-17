@@ -18,6 +18,7 @@ export function globalChat(io, socket) {
             });
         }
         catch (err) {
+            console.error("Error for user", ver_user_id, err);
             socket.emit("socket_error", { code: (err.code || "DATABASE_ERROR") });
         }
     });
