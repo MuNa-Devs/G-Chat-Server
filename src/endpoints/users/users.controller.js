@@ -11,6 +11,7 @@ import {
     getSentFrndReqs, 
     getUser, 
     rejectFrndReq, 
+    removeFriend, 
     saveUserDetails, 
     searchUsers, 
     sendFrndReq 
@@ -164,7 +165,11 @@ export async function handleRemoveFrnd(req, res, next){
     const data = req.data;
 
     try{
-        //
+        await removeFriend(data.friendId, data.userId);
+
+        res.status(201).json({
+            success: true
+        });
     }
     catch (err){
         next(err);

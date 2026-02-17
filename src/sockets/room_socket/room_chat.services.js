@@ -44,7 +44,7 @@ export async function saveRoomMessage(room_id, user_id, message_form) {
                 message_id,
                 sent_at;
             `,
-            [room_id, user_id, message_form.message]
+            [room_id, user_id, message_form.text]
         );
 
         if (!msg_id_res.rowCount) {
@@ -72,7 +72,7 @@ export async function saveRoomMessage(room_id, user_id, message_form) {
             next_free_param += 3;
         }
 
-        if (message_form.files_list > 0) {
+        if (message_form.files_list.length > 0) {
             const file_res = await db_instance.query(
                 `
                 INSERT INTO room_message_files

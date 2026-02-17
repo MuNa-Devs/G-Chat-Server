@@ -11,7 +11,7 @@
 export default class UMS {
 
     static roomMessage(object) {
-        message = {
+        const message = {
             identifiers: {
                 message_id: object.message_id,
                 room_id: object.r_id
