@@ -19,7 +19,6 @@ export default function socketSetup(server) {
         const token = socket.handshake.auth.token;
 
         if (!token) {
-            console.log("No jwt included");
             return next(new UnAuthorized());
         }
 
@@ -41,8 +40,6 @@ export default function socketSetup(server) {
         catch (err) {
             socket.emit("socket_error", { code: "FORBIDDEN_ACCESS" });
         }
-
-        console.log("connection established", socket.user.id);
 
         globalChat(io, socket);
         roomChat(io, socket);

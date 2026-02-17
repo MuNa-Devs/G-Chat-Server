@@ -57,7 +57,10 @@ export function roomChat(io, socket) {
         }
         catch (err) {
             console.log("Error for user", socket.user.id, err);
-            socket.emit("socket_error", { code: (err.code || "DATABASE_ERROR") });
+            socket.emit("socket_error", {
+                code: (err.code || "DATABASE_ERROR"),
+                msg_id: message_form.msg_id
+            });
         }
     });
 }

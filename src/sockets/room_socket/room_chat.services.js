@@ -97,6 +97,7 @@ export async function saveRoomMessage(room_id, user_id, message_form) {
         return { message_id, timestamp };
     }
     catch (err) {
+        await db_instance.query('ROLLBACK');
         console.error("Unexpected DB error for user", user_id, err);
         throw new DatabaseOrServerError();
     }

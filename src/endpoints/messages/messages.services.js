@@ -2,29 +2,47 @@ import { DatabaseOrServerError } from "../../error_classes/defined_errors.js";
 import pool from "../api_utils/db.js";
 import UMS from "./UMS.js";
 
-export async function getGlobalChats(user_id, offset){
+export async function getGlobalChats(user_id, last_seen_msg){
     try{
         const res = await pool.query(
             `
             SELECT
                 m.*,
-                u.id,
+                COALESCE(
+                    JSON_AGG(
+                        JSON_BUILD_OBJECT(
+                            'filename', mf.filename,
+                            'file_url', mf.file_url
+                        ) ORDER BY mf.file_id ASC
+                    ) FILTER (WHERE mf.file_id IS NOT NULL),
+                    '[]'::json
+                ) as files,
                 u.username,
                 u.pfp
             FROM messages m
+
+            LEFT JOIN message_files mf
+            ON
+                m.id = mf.id
 
             JOIN users u
             ON
                 m.user_id = u.id
 
+            WHERE m.id < $1
+
+            GROUP BY
+                m.id,
+                u.id
+
             ORDER BY m.id ASC
-            
-            LIMIT 100 OFFSET $1;
+
+            LIMIT 100;
             `,
-            [offset]
+            [last_seen_msg]
         );
 
-        return res.rows;
+        return res.rows.map(msg => UMS.globalMessage(msg));
     }
     catch (err){
         console.error("Unexpected DB error for user", user_id, err);
