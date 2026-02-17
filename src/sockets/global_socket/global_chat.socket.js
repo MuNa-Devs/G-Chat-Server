@@ -3,23 +3,42 @@ import { saveGlobalMsg } from "./global_chat.services.js";
 export function globalChat(io, socket) {
     socket.join("global");
 
-    socket.on("send_message", async ({ message }) => {
-        const ver_user_id = socket.user_details.id;
-        const username = socket.user_details.username;
+    socket.on("send_message", async ({ message_form }) => {
+        const ver_user_id = socket.user.id;
 
         try {
-            const time = await saveGlobalMsg(ver_user_id, message);
+            const {
+                message_id,
+                timestamp
+            } = await saveGlobalMsg(ver_user_id, message_form);
 
-            socket.broadcast.to("global").emit("receive_message", {
-                user_id: ver_user_id,
-                username,
-                message,
-                time: time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            const ums = {
+                identifiers: {
+                    message_id
+                },
+                sender_details: {
+                    sender_id: ver_user_id,
+                    sender_name: socket.user_details.username,
+                    sender_pfp: socket.user_details.pfp
+                },
+                text: message_form.message,
+                files_list: message_form.files_list,
+                timestamp
+            }
+
+            socket.broadcast.to("global").emit("receive_message", ums);
+
+            socket.emit("message_emit-success", {
+                ...ums,
+                msg_id: message_form.msg_id
             });
         }
         catch (err) {
-            console.error("Error for user", ver_user_id, err);
-            socket.emit("socket_error", { code: (err.code || "DATABASE_ERROR") });
+            console.log("Error for user", ver_user_id, err);
+            socket.emit("socket_error", {
+                code: (err.code || "DATABASE_ERROR"),
+                msg_id: message_form.msg_id
+            });
         }
     });
 }

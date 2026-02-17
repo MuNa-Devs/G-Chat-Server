@@ -10,6 +10,24 @@
 
 export default class UMS {
 
+    static globalMessage(object){
+        const message = {
+            identifiers: {
+                message_id: object.id
+            },
+            sender_details: {
+                sender_id: object.user_id,
+                sender_name: object.username,
+                sender_pfp: object.pfp
+            },
+            text: object.message,
+            files_list: object.files,
+            timestamp: object.created_at
+        };
+
+        return message;
+    }
+
     static roomMessage(object) {
         const message = {
             identifiers: {
