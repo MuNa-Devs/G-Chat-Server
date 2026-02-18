@@ -5,7 +5,8 @@ import {
     getRooms, 
     getSearchedRooms, 
     joinRoom, 
-    leaveRoom 
+    leaveRoom, 
+    updateRoom
 } from "./rooms.services.js";
 
 export async function checkMembership(req, res, next){
@@ -106,18 +107,41 @@ export async function handleSearchRooms(req, res, next){
     }
 }
 
-export async function handleModifyRooms(req, res, next){
+export async function handleCreateRooms(req, res, next){
     const user_id = req.user_id;
-    const data = req.data;
+    const data = req.body;
+    const room_icon = req.file;
+
+    const room_icon_url = room_icon?.filename || data.room_icon || '#';
 
     try{
-        const room_id = await createRoom(user_id, data);
+        const room_id = await createRoom(user_id, data, room_icon_url);
 
         res.status(201).json({
             success: true,
             room_id,
             icon_name: data.room_icon
         });
+    }
+    catch (err){
+        next(err);
+    }
+}
+
+export async function handleUpdateRooms(req, res, next){
+    const user_id = req.user_id;
+    const room_id = req.room_id;
+    const data = req.body;
+    const room_icon = req.file;
+
+    const room_icon_url = room_icon?.filename || data.room_icon || '#';
+
+    try{
+        console.log("updating room data");
+
+        const state = await updateRoom(room_id, user_id, data, room_icon_url);
+
+        res.status(201).json({ success: state });
     }
     catch (err){
         next(err);

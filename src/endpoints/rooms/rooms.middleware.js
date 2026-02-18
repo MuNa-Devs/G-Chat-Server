@@ -52,12 +52,9 @@ export function checkSearchRoomParams(req, res, next) {
 
 export function checkModifyRoomParams(req, res, next) {
     const user_id = Number(req.query.user_id);
-
-    req.body.room_icon = req.file?.filename || null;
     const room_data = req.body;
 
     if (!user_id || user_id !== req.requesting_user.id) {
-        console.log(user_id, req.requesting_user.id);
         throw new ForbiddenAccess();
     }
 
@@ -70,7 +67,7 @@ export function checkModifyRoomParams(req, res, next) {
     ) throw new MissingData();
 
     if (user_id !== Number(room_data.room_aid)) {
-        console.log("from here");
+        console.log("No from here");
         throw new ForbiddenAccess();
     }
 

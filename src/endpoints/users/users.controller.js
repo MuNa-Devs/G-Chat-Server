@@ -28,7 +28,7 @@ export async function handleGetUser(req, res, next){
         throw new InvalidData();
 
     try{
-        const user = await getUser(req_user_id);
+        const user = await getUser(user_id, req_user_id);
 
         res.status(201).json({
             success: true,

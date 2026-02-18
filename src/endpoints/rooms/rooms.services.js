@@ -208,11 +208,11 @@ export async function getSearchedRooms(search_query, last_seen_id, user_id) {
                 r.r_id = rm.r_id
 
             WHERE
-                r.r_name ILIKE $1
+                r.r_name ILIKE $2
                 OR
-                u.username ILIKE $1
+                u.username ILIKE $2
                 AND
-                r.r_id < $2
+                r.r_id < $3
 
             GROUP BY r.r_id, u.username
 
@@ -220,7 +220,7 @@ export async function getSearchedRooms(search_query, last_seen_id, user_id) {
 
             LIMIT 15;
             `,
-            [search_string, last_seen_id]
+            [user_id, search_string, last_seen_id]
         );
 
         return result.rows;
@@ -231,7 +231,7 @@ export async function getSearchedRooms(search_query, last_seen_id, user_id) {
     }
 }
 
-export async function createRoom(user_id, data) {
+export async function createRoom(user_id, data, room_icon_url) {
     const db_instance = await pool.connect();
 
     try {
@@ -254,7 +254,7 @@ export async function createRoom(user_id, data) {
                 data.room_size,
                 data.room_type,
                 data.join_pref,
-                data.room_icon
+                room_icon_url
             ]
         );
 
@@ -283,6 +283,47 @@ export async function createRoom(user_id, data) {
     }
     finally {
         db_instance.release();
+    }
+}
+
+export async function updateRoom(room_id, user_id, data, room_icon_url){
+    try{
+        const result = await pool.query(
+            `
+            UPDATE rooms
+            SET
+                r_name = COALESCE(NULLIF($1, ''), r_name),
+                r_desc = COALESCE(NULLIF($2, ''), r_desc),
+                r_size = $3,
+                r_type = $4,
+                join_pref = $5,
+                icon_url = COALESCE(NULLIF($6, '#'), icon_url)
+
+            WHERE (
+                r_id = $7
+                AND
+                r_aid = $8
+            )
+            
+            RETURNING 1;
+            `,
+            [
+                data.room_name,
+                data.room_desc,
+                data.room_size,
+                data.room_type,
+                data.join_pref,
+                room_icon_url,
+                room_id,
+                user_id
+            ]
+        );
+
+        return (result.rowCount !== 0);
+    }
+    catch (err){
+        console.error("Unexpected DB error for user",user_id, err);
+        throw new DatabaseOrServerError();
     }
 }
 

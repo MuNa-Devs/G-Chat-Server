@@ -8,7 +8,7 @@ import {
 
 import pool from "../api_utils/db.js";
 
-export async function getUser(user_id) {
+export async function getUser(user_id, req_user_id) {
     try {
         const result = await pool.query(
             `
@@ -19,12 +19,23 @@ export async function getUser(user_id) {
                 u.department,
                 u.about,
                 u.phone,
-                u.personal_email
+                u.personal_email,
+                EXISTS (
+                    SELECT
+                        f.friend_id
+                    FROM friends f
+
+                    WHERE (
+                        f.user1 = LEAST($2, u.id)
+                        AND
+                        f.user2 = GREATEST($2, u.id)
+                    )
+                ) AS is_friend
             FROM users u
 
             WHERE u.id = $1;
             `,
-            [user_id]
+            [req_user_id, user_id]
         );
 
         if (!result.rowCount)

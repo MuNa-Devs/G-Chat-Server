@@ -16,8 +16,9 @@ import {
     handleGetRoomMembers, 
     handleJoinRoom, 
     handleLeaveRoom, 
-    handleModifyRooms, 
-    handleSearchRooms
+    handleCreateRooms, 
+    handleSearchRooms,
+    handleUpdateRooms
 } from "./rooms.controller.js";
 
 import { upload } from "../api_utils/file_storage.js";
@@ -71,7 +72,15 @@ rooms_router.post(
     authorizeToken,
     upload.single("room_icon"),
     checkModifyRoomParams,
-    handleModifyRooms
+    handleCreateRooms
+);
+
+rooms_router.post(
+    "/update",
+    authorizeToken,
+    upload.single("room_icon"),
+    checkGetARoomParams,
+    handleUpdateRooms
 );
 
 rooms_router.get(

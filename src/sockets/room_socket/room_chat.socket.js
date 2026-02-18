@@ -43,7 +43,7 @@ export function roomChat(io, socket) {
                     sender_name: socket.user_details.username,
                     sender_pfp: socket.user_details.pfp
                 },
-                text: message_form.message,
+                text: message_form.text,
                 files_list: message_form.files_list,
                 timestamp
             }
