@@ -38,9 +38,6 @@ export async function getUser(user_id, req_user_id) {
             [req_user_id, user_id]
         );
 
-        if (!result.rowCount)
-            throw new NotFound();
-
         return result.rows[0];
     }
     catch (err) {
@@ -180,9 +177,9 @@ export async function sendFrndReq(sender, receiver) {
             [sender, receiver]
         );
 
-        if (frnd_res.rowCount) {
+        if (frnd_res.rowCount !== 0) {
+            console.log("friend req from receiver already exists. Adding to friends");
             await db_instance.query('COMMIT');
-            throw new FrndReqTransactionFailed();
         }
 
         const result = await db_instance.query(

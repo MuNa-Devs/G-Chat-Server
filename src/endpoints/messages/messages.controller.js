@@ -1,4 +1,5 @@
 import { 
+    getContacts,
     getGlobalChats, 
     getRoomMessages 
 } from "./messages.services.js";
@@ -32,6 +33,35 @@ export async function handleGetRoomMessages(req, res, next){
             success: true,
             messages
         });
+    }
+    catch (err){
+        next(err);
+    }
+}
+
+export async function handleGetContacts(req, res, next){
+    const user_id = req.user_id;
+
+    try{
+        const contacts = await getContacts(user_id);
+
+        res.status(201).json({
+            success: true,
+            contacts
+        });
+    }
+    catch (err){
+        next(err);
+    }
+}
+
+export async function handleGetChats(req, res, next){
+    const user_id = req.user_id;
+    const last_seen_id = req.last_seen;
+    const contact_id = req.contact_id;
+
+    try{
+        // const chats = await 
     }
     catch (err){
         next(err);

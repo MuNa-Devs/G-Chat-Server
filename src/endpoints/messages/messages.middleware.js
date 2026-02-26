@@ -43,3 +43,27 @@ export function checkGetRoomMsgsParams(req, res, next){
 
     next();
 }
+
+export function checkGetChatParams(req, res, next){
+    const user_id = Number(req.query.user_id);
+    const contact_id = Number(req.query.contact_id);
+    const last_seen = Number(req.query.last_seen_id);
+
+    if (!user_id || !contact_id || !last_seen)
+        throw new MissingData();
+
+    if (
+        (!Number.isInteger(user_id) && user_id < 1)
+        || (!Number.isInteger(contact_id) && contact_id < 1)
+        || (!Number.isInteger(last_seen) && last_seen < 1)
+    ) throw new InvalidData();
+
+    if (!user_id !== req.requesting_user.id)
+        throw new ForbiddenAccess();
+
+    req.user_id = user_id;
+    req.contact_id = contact_id;
+    req.last_seen = last_seen;
+
+    next();
+}

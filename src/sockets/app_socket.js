@@ -16,18 +16,22 @@ export default function socketSetup(server) {
     });
 
     io.use((socket, next) => {
+        console.log("Socket connection is being verified for the user.");
         const token = socket.handshake.auth.token;
 
         if (!token) {
+            console.log("Token is not being included. So, connection is refused.");
             return next(new UnAuthorized());
         }
 
         try {
             const user = jwt.verify(token, process.env.JWT_SECRET);
             socket.user = user;
+            console.log("User with id =", user.id, "is verified.");
             next();
         }
         catch (err) {
+            console.log("User is NOT verified.");
             next(new InvalidJWT());
         }
     });
@@ -35,9 +39,12 @@ export default function socketSetup(server) {
     io.on("connection", async (socket) => {
 
         try {
-            socket.user_details = await getUser(socket.user.id);
+            console.log(socket.user.id);
+            socket.user_details = await getUser(socket.user.id, socket.user.id);
+            console.log(socket.user_details);
         }
         catch (err) {
+            console.log("Fetch of user details for user,", socket.id, "failed");
             socket.emit("socket_error", { code: "FORBIDDEN_ACCESS" });
         }
 

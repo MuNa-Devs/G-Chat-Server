@@ -104,3 +104,45 @@ export async function getRoomMessages(user_id, room_id, last_seen){
         throw new DatabaseOrServerError();
     }
 }
+
+export async function getContacts(user_id){
+    try{
+        const result = await pool.query(
+            `
+            SELECT
+                *
+            FROM contacts
+
+            WHERE (
+                person1 = $1
+                OR
+                person2 = $1
+            )
+            
+            ORDER BY contact_id ASC;
+            `,
+            [user_id]
+        );
+
+        return result.rows;
+    }
+    catch (err){
+        console.log("Unexpected DB error for user", user_id);
+        throw new DatabaseOrServerError();
+    }
+}
+
+export async function getChats(user_id, contact_id, last_seen_id){
+    try{
+        const result = await pool.query(
+            `
+            SELECT
+
+            `
+        )
+    }
+    catch (err){
+        console.log("Unexpected DB error for user", user_id, err);
+        throw new DatabaseOrServerError();
+    }
+}
