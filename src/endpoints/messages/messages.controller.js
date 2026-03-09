@@ -1,4 +1,5 @@
 import { 
+    getChats,
     getContacts,
     getGlobalChats, 
     getRoomMessages 
@@ -61,7 +62,12 @@ export async function handleGetChats(req, res, next){
     const contact_id = req.contact_id;
 
     try{
-        // const chats = await 
+        const chats = await getChats(user_id, contact_id, last_seen_id);
+
+        res.status(201).json({
+            success: true,
+            chats
+        });
     }
     catch (err){
         next(err);

@@ -1,10 +1,15 @@
 import { Server } from 'socket.io';
 import jwt from "jsonwebtoken";
-import { saveDirectMessage } from '../../trash/socket_logics.js';
-import { InvalidJWT, UnAuthorized } from '../error_classes/defined_errors.js';
+
+import {
+    InvalidJWT, 
+    UnAuthorized 
+} from '../error_classes/defined_errors.js';
+
 import { getUser } from '../endpoints/users/users.services.js';
 import { globalChat } from './global_socket/global_chat.socket.js';
 import { roomChat } from './room_socket/room_chat.socket.js';
+import { DM } from './dm_socket/dm_socket.socket.js';
 
 export const user_socket_map = new Map();
 
@@ -50,25 +55,7 @@ export default function socketSetup(server) {
 
         globalChat(io, socket);
         roomChat(io, socket);
-
-        socket.on("connect-dm", async ({ contact_id }) => {
-            socket.join(contact_id);
-        });
-
-        socket.on("disconnect_id", async ({ contact_id }) => {
-            socket.leave(contact_id);
-        });
-
-        socket.on("send-dm", async ({
-            contact_id,
-            message,
-            sent_by,
-            sent_at,
-            message_details
-        }) => {
-            saveDirectMessage(contact_id, message, sent_by, sent_at);
-            socket.to(contact_id).emit("get-dm", message_details);
-        });
+        DM(io, socket);
 
         socket.on("disconnect", () => {
             user_socket_map.delete(socket.user.id);

@@ -5,7 +5,7 @@ const pool = new Pool({
     ssl: {
         require: true,
         rejectUnauthorized: false,
-    },
+    }
 });
 
 export default pool;

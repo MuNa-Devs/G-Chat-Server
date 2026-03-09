@@ -50,6 +50,7 @@ export async function authorizeUser({ email, password }) {
                 u.email,
                 u.password
             FROM users u
+            
             WHERE u.email = $1;
             `,
             [email]

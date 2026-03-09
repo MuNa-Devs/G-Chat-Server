@@ -46,4 +46,23 @@ export default class UMS {
 
         return message;
     }
+
+    static directMessage(object){
+        const message = {
+            identifiers: {
+                contact_id: object.contact_id,
+                message_id: object.message_id
+            },
+            sender_details: {
+                sender_id: object.user_id,
+                sender_name: object.username,
+                sender_pfp: object.pfp
+            },
+            text: object.message,
+            files_list: object.files,
+            timestamp: object.sent_at
+        };
+
+        return message;
+    }
 }

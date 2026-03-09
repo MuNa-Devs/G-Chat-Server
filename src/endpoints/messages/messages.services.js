@@ -137,9 +137,49 @@ export async function getChats(user_id, contact_id, last_seen_id){
         const result = await pool.query(
             `
             SELECT
+                dm.*,
+                COALESCE(
+                    JSON_AGG(
+                        JSON_BUILD_OBJECT(
+                            'filename', 'dmf.filename',
+                            'file_url', 'dmf.file_url'
+                        ) ORDER BY dmf.file_id ASC
+                    ) FILTER (WHERE dmf.file_id IS NOT NULL)
+                    '[]'::json
+                ) AS files,
+                u.username,
+                u.pfp,
+                u.id AS user_id
+            FROM direct_messages dm
 
-            `
-        )
+            LEFT JOIN direct_message_files dmf
+            ON
+                dm.message_id = dmf.message_id
+
+            JOIN users u
+            ON
+                dm.sent_by = u.id
+
+            WHERE (
+                dm.contact_id = $1
+                AND
+                dm.message_id < $2
+            )
+
+            GROUP BY
+                dm.message_id,
+                u.id
+
+            ORDER BY dm.message_id ASC
+
+            LIMIT 100;
+            `,
+            [contact_id, last_seen_id]
+        );
+
+        const ums = result.rows.map(msg => UMS.directMessage(msg));
+
+        return ums;
     }
     catch (err){
         console.log("Unexpected DB error for user", user_id, err);
