@@ -15,7 +15,9 @@ import {
     handleGetSentFrndReqs,
     handleGetFrnds,
     handleRemoveFrnd,
-    handleGetRecFrndReqs
+    handleGetRecFrndReqs,
+    handleGetRecentFrnds,
+    handleSearchFriend
 } from "./users.controller.js";
 
 import { authorizeToken } from "./../auth/auth.middleware.js";
@@ -43,6 +45,13 @@ user_router.get(
     authorizeToken,
     checkSearchUserParams,
     handleSearchUser
+)
+
+user_router.get(
+    "/search/friends",
+    authorizeToken,
+    checkSearchUserParams,
+    handleSearchFriend
 )
 
 user_router.post(
@@ -80,5 +89,12 @@ user_router.post(
     chkRemoveFrndData,
     handleRemoveFrnd
 )
+
+user_router.get(
+    "/recent-friends",
+    authorizeToken,
+    checkUserId,
+    handleGetRecentFrnds
+);
 
 export default user_router;

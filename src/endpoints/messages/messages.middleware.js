@@ -67,3 +67,21 @@ export function checkGetChatParams(req, res, next){
 
     next();
 }
+
+export function checkSearchContactParams(req, res, next){
+    const user_id = Number(req.query.user_id);
+    const query = req.query.query;
+    const last_seen = Number(req.query.last_seen_id);
+
+    if (user_id !== req.requesting_user.id)
+        throw new ForbiddenAccess();
+
+    if (!query || !last_seen)
+        throw new InvalidData();
+
+    req.user_id = user_id;
+    req.search_query = query;
+    req.last_seen = last_seen;
+
+    next();
+}

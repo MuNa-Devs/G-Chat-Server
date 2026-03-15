@@ -2,7 +2,8 @@ import {
     getChats,
     getContacts,
     getGlobalChats, 
-    getRoomMessages 
+    getRoomMessages, 
+    searchContacts
 } from "./messages.services.js";
 
 export async function handleGetGlobalChats(req, res, next){
@@ -67,6 +68,26 @@ export async function handleGetChats(req, res, next){
         res.status(201).json({
             success: true,
             chats
+        });
+    }
+    catch (err){
+        next(err);
+    }
+}
+
+export async function handleSearchContacts(req, res, next){
+    const user_id = req.user_id;
+    const query = req.search_query;
+    const last_seen = req.last_seen;
+
+    console.log("Search started");
+
+    try{
+        const contacts = await searchContacts(user_id, last_seen, query);
+
+        res.status(201).json({
+            success: true,
+            contacts
         });
     }
     catch (err){

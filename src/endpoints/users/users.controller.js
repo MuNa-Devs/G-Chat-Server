@@ -7,12 +7,14 @@ import {
 import { 
     acceptFrndReq, 
     getFriends, 
+    getRecentFriends, 
     getRecFrndReqs, 
     getSentFrndReqs, 
     getUser, 
     rejectFrndReq, 
     removeFriend, 
     saveUserDetails, 
+    searchFriends, 
     searchUsers, 
     sendFrndReq 
 } from "./users.services.js";
@@ -71,6 +73,24 @@ export async function handleSearchUser(req, res, next){
         res.status(201).json({
             success: true,
             users
+        });
+    }
+    catch (err){
+        next(err);
+    }
+}
+
+export async function handleSearchFriend(req, res, next){
+    const user_id = Number(req.user_id);
+    const search_query = req.search_query;
+    const last_seen_id = Number(req.last_seen_id);
+
+    try{
+        const search_res = await searchFriends(user_id, search_query, last_seen_id);
+
+        res.status(201).json({
+            success: true,
+            search_res
         });
     }
     catch (err){
@@ -169,6 +189,22 @@ export async function handleRemoveFrnd(req, res, next){
 
         res.status(201).json({
             success: true
+        });
+    }
+    catch (err){
+        next(err);
+    }
+}
+
+export async function handleGetRecentFrnds(req, res, next){
+    const user_id = req.user_id;
+
+    try{
+        const recents = await getRecentFriends(user_id);
+
+        res.status(201).json({
+            success: true,
+            recents
         });
     }
     catch (err){

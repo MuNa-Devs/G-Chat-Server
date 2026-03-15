@@ -109,17 +109,38 @@ export async function getContacts(user_id){
     try{
         const result = await pool.query(
             `
-            SELECT
-                *
-            FROM contacts
+            SELECT DISTINCT ON (c.contact_id)
+                c.contact_id,
+                CASE
+                    WHEN c.person1 = $1 THEN c.person2
+                    ELSE c.person1
+                END AS other_id,
+
+                dm.message AS recent_message,
+                dm.sent_by,
+                dm.sent_at,
+                u.username,
+                u.pfp
+            FROM contacts c
+
+            LEFT JOIN direct_messages dm
+            ON
+                dm.contact_id = c.contact_id
+
+            JOIN users u
+            ON
+                u.id = CASE
+                WHEN c.person1 = $1 THEN c.person2
+                ELSE c.person1
+            END
 
             WHERE (
-                person1 = $1
+                c.person1 = $1
                 OR
-                person2 = $1
+                c.person2 = $1
             )
-            
-            ORDER BY contact_id ASC;
+
+            ORDER BY c.contact_id, dm.sent_at DESC;
             `,
             [user_id]
         );
@@ -180,6 +201,62 @@ export async function getChats(user_id, contact_id, last_seen_id){
         const ums = result.rows.map(msg => UMS.directMessage(msg));
 
         return ums;
+    }
+    catch (err){
+        console.log("Unexpected DB error for user", user_id, err);
+        throw new DatabaseOrServerError();
+    }
+}
+
+export async function searchContacts(user_id, last_seen_id, query){
+    try{
+        const result = await pool.query(
+            `
+            SELECT DISTINCT ON (c.contact_id)
+                c.contact_id,
+                CASE
+                    WHEN c.person1 = $1 THEN c.person2
+                    ELSE c.person1
+                END AS other_id,
+
+                dm.message AS recent_message,
+                dm.sent_by,
+                dm.sent_at,
+                u.username,
+                u.pfp
+
+            FROM contacts c
+
+            LEFT JOIN direct_messages dm
+            ON
+                dm.contact_id = c.contact_id
+
+            JOIN users u
+            ON u.id = CASE
+                WHEN c.person1 = $1 THEN c.person2
+                ELSE c.person1
+            END
+
+            WHERE (
+                (
+                    c.person1 = $1
+                    OR
+                    c.person2 = $1
+                )
+                AND
+                u.username ILIKE $2
+                AND
+                c.contact_id < $3
+            )
+
+            ORDER BY c.contact_id, dm.sent_at DESC
+
+            LIMIT 100;
+            `,
+            [user_id, query, last_seen_id]
+        );
+
+        return result.rows;
     }
     catch (err){
         console.log("Unexpected DB error for user", user_id, err);

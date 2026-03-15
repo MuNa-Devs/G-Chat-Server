@@ -5,13 +5,15 @@ import {
     handleGetChats,
     handleGetContacts,
     handleGetGlobalChats, 
-    handleGetRoomMessages 
+    handleGetRoomMessages, 
+    handleSearchContacts
 } from "./messages.controller.js";
 
 import { 
     checkGetChatParams,
     checkGetRoomMsgsParams, 
-    checkOffset 
+    checkOffset, 
+    checkSearchContactParams
 } from "./messages.middleware.js";
 import { checkUserId } from "../users/users.middleware.js";
 
@@ -43,6 +45,13 @@ msg_router.get(
     authorizeToken,
     checkGetChatParams,
     handleGetChats
+);
+
+msg_router.get(
+    "/search/contacts",
+    authorizeToken,
+    checkSearchContactParams,
+    handleSearchContacts
 );
 
 export default msg_router;

@@ -132,6 +132,48 @@ export async function searchUsers(user_id, search_query) {
     }
 }
 
+export async function searchFriends(user_id, search_query, last_seen_id){
+    try {
+        const search_string = `${search_query}%`;
+
+        const result = await pool.query(
+            `
+            SELECT
+                f.friend_id,
+                u.id,
+                u.username,
+                u.pfp
+            FROM friends f
+
+            JOIN users u
+            ON
+                u.id = CASE
+                    WHEN f.user1 = $2 THEN f.user2
+                    ELSE f.user1
+                END
+
+            WHERE
+                u.username ILIKE $1
+                AND
+                u.id < $3
+                AND
+                $2 IN (user1, user2)
+                
+            ORDER BY u.id DESC
+
+            LIMIT 15;
+            `,
+            [search_string, user_id, last_seen_id]
+        );
+
+        return result.rows;
+    }
+    catch (err) {
+        console.error("Unexpected DB error for user", user_id, err);
+        throw new DatabaseOrServerError();
+    }
+}
+
 export async function sendFrndReq(sender, receiver) {
     const db_instance = await pool.connect();
 
@@ -449,6 +491,41 @@ export async function removeFriend(friend_id, user_id) {
         return result.rows[0];
     }
     catch (err) {
+        console.error("Unexpected DB error for user", user_id, err);
+        throw new DatabaseOrServerError();
+    }
+}
+
+export async function getRecentFriends(user_id){
+    try{
+        const result = await pool.query(
+            `
+            SELECT
+                f.friend_id,
+                u.id AS other_id,
+                u.username,
+                u.pfp
+            FROM friends f
+
+            JOIN users u
+            ON
+                U.id = CASE
+                    WHEN f.user1 = $1 THEN f.user2
+                    ELSE f.user1
+                END
+
+            WHERE $1 IN (user1, user2)
+
+            ORDER BY f.connected_at DESC
+
+            LIMIT 8;
+            `,
+            [user_id]
+        );
+
+        return result.rows;
+    }
+    catch (err){
         console.error("Unexpected DB error for user", user_id, err);
         throw new DatabaseOrServerError();
     }
