@@ -29,11 +29,11 @@ export function validateRegUser(req, res, next) {
     next();
 }
 
-export function validateLoginUser(req, res, next){
-    const {email, password} = req.body;
+export function validateLoginUser(req, res, next) {
+    const { email, password } = req.body;
 
     // Check for empty fields
-    if (!email || !password){
+    if (!email || !password) {
         throw new MissingData();
     }
 
@@ -45,23 +45,24 @@ export function validateLoginUser(req, res, next){
     next();
 }
 
-export function authorizeToken(req, res, next){
+export function authorizeToken(req, res, next) {
     const auth_token = req.headers.auth_token;
 
-    if (!auth_token){
+    if (!auth_token) {
         throw new InvalidJWT();
     }
 
     const token = auth_token.split(" ")[1];
 
-    if (!token){
+    if (!token) {
         throw new InvalidJWT();
     }
 
-    try{
+    try {
         req.requesting_user = jwt.verify(token, process.env.JWT_SECRET);
+        req.requesting_user.id = Number(req.requesting_user.id);
     }
-    catch (err){
+    catch (err) {
         throw new InvalidJWT();
     }
 

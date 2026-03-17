@@ -2,6 +2,7 @@ import { Router } from "express";
 import { authorizeToken } from "../auth/auth.middleware.js";
 
 import { 
+    handleCreateContact,
     handleGetChats,
     handleGetContacts,
     handleGetGlobalChats, 
@@ -10,6 +11,7 @@ import {
 } from "./messages.controller.js";
 
 import { 
+    checkCreateContactParams,
     checkGetChatParams,
     checkGetRoomMsgsParams, 
     checkOffset, 
@@ -52,6 +54,13 @@ msg_router.get(
     authorizeToken,
     checkSearchContactParams,
     handleSearchContacts
+);
+
+msg_router.post(
+    "/create/contact",
+    authorizeToken,
+    checkCreateContactParams,
+    handleCreateContact
 );
 
 export default msg_router;

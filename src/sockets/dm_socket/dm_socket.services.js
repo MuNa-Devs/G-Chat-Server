@@ -65,13 +65,12 @@ export async function saveDM(contact_id, user_id, message_form){
         for (const file of message_form.files_list){
             file_vals.push(file.filename);
             file_vals.push(file.file_url);
-            file_vals.push(file.mime_type);
 
             query_placeholders.push(
-                `($1, $${next_free_param}, $${next_free_param + 1}, $${next_free_param + 2})`
+                `($1, $${next_free_param}, $${next_free_param + 1})`
             );
 
-            next_free_param += 3;
+            next_free_param += 2;
         }
 
         if (message_form.files_list.length > 0){

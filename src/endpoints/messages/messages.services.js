@@ -1,9 +1,9 @@
-import { DatabaseOrServerError } from "../../error_classes/defined_errors.js";
+import { DatabaseOrServerError, InvalidUser } from "../../error_classes/defined_errors.js";
 import pool from "../api_utils/db.js";
 import UMS from "./UMS.js";
 
-export async function getGlobalChats(user_id, last_seen_msg){
-    try{
+export async function getGlobalChats(user_id, last_seen_msg) {
+    try {
         const res = await pool.query(
             `
             SELECT
@@ -44,14 +44,14 @@ export async function getGlobalChats(user_id, last_seen_msg){
 
         return res.rows.map(msg => UMS.globalMessage(msg));
     }
-    catch (err){
+    catch (err) {
         console.error("Unexpected DB error for user", user_id, err);
         throw new DatabaseOrServerError();
     }
 }
 
-export async function getRoomMessages(user_id, room_id, last_seen){
-    try{
+export async function getRoomMessages(user_id, room_id, last_seen) {
+    try {
         const result = await pool.query(
             `
             SELECT
@@ -99,14 +99,14 @@ export async function getRoomMessages(user_id, room_id, last_seen){
 
         return ums;
     }
-    catch (err){
+    catch (err) {
         console.error("Unexpected DB error for user", user_id, err);
         throw new DatabaseOrServerError();
     }
 }
 
-export async function getContacts(user_id){
-    try{
+export async function getContacts(user_id) {
+    try {
         const result = await pool.query(
             `
             SELECT DISTINCT ON (c.contact_id)
@@ -147,14 +147,14 @@ export async function getContacts(user_id){
 
         return result.rows;
     }
-    catch (err){
+    catch (err) {
         console.log("Unexpected DB error for user", user_id);
         throw new DatabaseOrServerError();
     }
 }
 
-export async function getChats(user_id, contact_id, last_seen_id){
-    try{
+export async function getChats(user_id, contact_id, last_seen_id) {
+    try {
         const result = await pool.query(
             `
             SELECT
@@ -162,10 +162,10 @@ export async function getChats(user_id, contact_id, last_seen_id){
                 COALESCE(
                     JSON_AGG(
                         JSON_BUILD_OBJECT(
-                            'filename', 'dmf.filename',
-                            'file_url', 'dmf.file_url'
+                            'filename', dmf.filename,
+                            'file_url', dmf.file_url
                         ) ORDER BY dmf.file_id ASC
-                    ) FILTER (WHERE dmf.file_id IS NOT NULL)
+                    ) FILTER (WHERE dmf.file_id IS NOT NULL),
                     '[]'::json
                 ) AS files,
                 u.username,
@@ -202,14 +202,14 @@ export async function getChats(user_id, contact_id, last_seen_id){
 
         return ums;
     }
-    catch (err){
+    catch (err) {
         console.log("Unexpected DB error for user", user_id, err);
         throw new DatabaseOrServerError();
     }
 }
 
-export async function searchContacts(user_id, last_seen_id, query){
-    try{
+export async function searchContacts(user_id, last_seen_id, query) {
+    try {
         const result = await pool.query(
             `
             SELECT DISTINCT ON (c.contact_id)
@@ -258,8 +258,122 @@ export async function searchContacts(user_id, last_seen_id, query){
 
         return result.rows;
     }
-    catch (err){
+    catch (err) {
         console.log("Unexpected DB error for user", user_id, err);
         throw new DatabaseOrServerError();
+    }
+}
+
+export async function createContact(user_id, friend_id) {
+    const db_con = await pool.connect();
+
+    try {
+        await db_con.query('BEGIN');
+
+        const frnd_res = await db_con.query(
+            `
+            SELECT
+                CASE
+                    WHEN user1 = $1 THEN user2
+                    ELSE user1
+                END AS other_id
+            FROM friends
+
+            WHERE friend_id = $2
+            `,
+            [user_id, friend_id]
+        );
+
+        if (!frnd_res.rowCount) {
+            throw new InvalidUser();
+        }
+
+        const other_id = frnd_res.rows[0].other_id;
+
+        if (other_id === user_id) {
+            throw new InvalidUser();
+        }
+
+        const contact_res = await db_con.query(
+            `
+            WITH
+                inserted AS (
+                    INSERT INTO contacts(person1, person2)
+                    VALUES (
+                        LEAST($1::INT, $2::INT),
+                        GREATEST($1::INT, $2::INT)
+                    )
+
+                    ON CONFLICT (
+                        LEAST(person1, person2),
+                        GREATEST(person1, person2)
+                    )
+                    DO NOTHING
+
+                    RETURNING contact_id, person1, person2
+                ),
+                existing AS (
+                    SELECT
+                        contact_id,
+                        person1,
+                        person2
+                    FROM contacts
+
+                    WHERE (
+                        person1 = LEAST($1::INT, $2::INT)
+                        AND
+                        person2 = GREATEST($1::INT, $2::INT)
+                    )
+                )
+
+            SELECT
+                u.id,
+                u.pfp,
+                u.username,
+                nc.contact_id,
+                nc.person1,
+                nc.person2
+            FROM (
+                SELECT *
+                FROM inserted
+
+                UNION ALL
+
+                SELECT *
+                FROM existing
+
+                LIMIT 1
+            ) nc
+
+            JOIN users u
+            ON
+                u.id = CASE
+                    WHEN nc.person1 = $1 THEN nc.person2
+                    ELSE nc.person1
+                END;
+            `,
+            [user_id, other_id]
+        );
+
+        if (!contact_res.rowCount) {
+            console.log("here", contact_res.rowCount);
+            throw new DatabaseOrServerError();
+        }
+
+        await db_con.query('COMMIT');
+
+        return contact_res.rows[0];
+    }
+    catch (err) {
+        await db_con.query('ROLLBACK');
+        console.log("Unexpected DB error for user", user_id, err);
+
+        if (err.is_expected)
+            throw err;
+
+        throw new DatabaseOrServerError();
+    }
+    finally {
+        db_con.release();
     }
 }

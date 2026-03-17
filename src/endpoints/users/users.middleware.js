@@ -29,7 +29,7 @@ export function checkSearchUserParams(req, res, next) {
     if (!user_id || !query || !last_seen_id)
         throw new MissingData();
 
-    if (user_id !== req.requesting_user.id)
+    if (user_id !== Number(req.requesting_user.id))
         throw new ForbiddenAccess();
 
     if (!Number.isInteger(user_id))
