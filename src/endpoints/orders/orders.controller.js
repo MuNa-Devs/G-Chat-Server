@@ -1,6 +1,6 @@
-import { insertWriter } from "./writers.query.js";
+import { insertWriter } from "./orders.query.js";
 
-export async function createWriter(req, res) {
+export async function createWriter(req, res, next) {
     try {
         const {
             writer_id,
@@ -19,10 +19,6 @@ export async function createWriter(req, res) {
         });
 
     } catch (err) {
-        console.error(err);
-
-        res.status(500).json({
-            success: false
-        });
+        next(err);
     }
 }
