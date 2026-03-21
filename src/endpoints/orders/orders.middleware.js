@@ -1,7 +1,7 @@
 import { 
     ForbiddenAccess, 
     InvalidData 
-} from "../../error_classes/defined_errors";
+} from "../../error_classes/defined_errors.js";
 
 export function validateCre_writerMemo(req, res, next) {
     const {
