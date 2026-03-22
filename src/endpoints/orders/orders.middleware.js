@@ -19,3 +19,14 @@ export function validateCre_writerMemo(req, res, next) {
 
     next();
 }
+
+export function verifyWriter(req, res, next){
+    const writer_id = Number(req.query.writer_id);
+
+    if (!writer_id)
+        throw new InvalidData();
+
+    req.writer_id = writer_id;
+
+    next();
+}

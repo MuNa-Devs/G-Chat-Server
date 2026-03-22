@@ -28,8 +28,6 @@ export async function insertWriter({
 }
 
 export async function fetchAllWriters() {
-    // are error handling chei ra...
-    // error classes use chei
     try {
         const result = await pool.query(
             `
@@ -56,6 +54,54 @@ export async function fetchAllWriters() {
     }
     catch (err){
         console.log(err);
+        throw new DatabaseOrServerError();
+    }
+}
+
+export async function getWriter(user_id, writer_id){
+    try{
+        const result = await pool.query(
+            `
+            SELECT
+                w.*,
+                (
+                    SELECT COUNT(*)
+                    FROM assignments a
+
+                    WHERE a.customer_id = w.writer_id
+                ) AS assignments_created,
+                u.username,
+                u.pfp,
+                u.about,
+                u.department
+            FROM writers w
+
+            JOIN users u
+            ON
+                w.writer_id = u.id
+
+            WHERE w.writer_id = $1;
+            `,
+            [writer_id]
+        );
+
+        if (!result.rowCount)
+            return null;
+
+        if (user_id != writer_id){
+            const {
+                assignments_delivered,
+                assignments_created,
+                ...temp
+            } = result.rows[0]
+
+            return { am_i_this_writer: false, ...temp };
+        }
+
+        return { am_i_this_writer: true, ...result.rows[0] }
+    }
+    catch (err){
+        console.error("Unexpected DB error for user", user_id, err);
         throw new DatabaseOrServerError();
     }
 }
