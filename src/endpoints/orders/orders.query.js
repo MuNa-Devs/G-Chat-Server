@@ -27,3 +27,24 @@ export async function insertWriter({
         throw new DatabaseOrServerError();
     }
 }
+
+export async function fetchAllWriters() {
+    const result = await pool.query(
+        `
+        SELECT 
+            w.writer_id,
+            w.sample_url,
+            w.price_per_page,
+            w.rating,
+            u.username,
+            u.pfp
+
+        FROM writers w
+
+        JOIN users u
+        ON w.writer_id = u.id
+        `
+    );
+
+    return result.rows;
+}

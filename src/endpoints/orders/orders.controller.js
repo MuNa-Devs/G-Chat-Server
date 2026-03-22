@@ -1,4 +1,6 @@
 import { insertWriter } from "./orders.query.js";
+import { fetchAllWriters } from "./orders.query.js";
+
 
 export async function createWriter(req, res, next) {
     try {
@@ -20,5 +22,23 @@ export async function createWriter(req, res, next) {
 
     } catch (err) {
         next(err);
+    }
+}
+
+export async function getAllWriters(req, res) {
+    try {
+        const writers = await fetchAllWriters();
+
+        res.status(200).json({
+            success: true,
+            writers
+        });
+
+    } catch (err) {
+        console.error(err);
+
+        res.status(500).json({
+            success: false
+        });
     }
 }
