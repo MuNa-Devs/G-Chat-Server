@@ -19,7 +19,3 @@ export function validateCre_writerMemo(req, res, next) {
 
     next();
 }
-
-export function validateWriter(req, res, next) {
-    next();
-}

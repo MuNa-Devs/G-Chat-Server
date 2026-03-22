@@ -25,7 +25,7 @@ export async function createWriter(req, res, next) {
     }
 }
 
-export async function getAllWriters(req, res) {
+export async function getAllWriters(req, res, next) {
     try {
         const writers = await fetchAllWriters();
 
@@ -36,9 +36,6 @@ export async function getAllWriters(req, res) {
 
     } catch (err) {
         console.error(err);
-
-        res.status(500).json({
-            success: false
-        });
+        next(err);
     }
 }

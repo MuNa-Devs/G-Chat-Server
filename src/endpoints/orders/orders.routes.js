@@ -1,10 +1,15 @@
 import { Router } from "express";
 import { authorizeToken } from "../auth/auth.middleware.js";
-import { createWriter } from "./orders.controller.js";
+
+import { 
+    createWriter,
+    getAllWriters
+} from "./orders.controller.js";
+
 import {
     validateCre_writerMemo
 } from "./orders.middleware.js";
-import { getAllWriters } from "./orders.controller.js";
+import { checkUserId } from "../users/users.middleware.js";
 
 const orders_router = Router();
 
@@ -18,6 +23,7 @@ orders_router.post(
 orders_router.get(
     "/writer/all",
     authorizeToken,
+    checkUserId,
     getAllWriters
 );
 

@@ -6,7 +6,6 @@ export async function insertWriter({
     sample_url,
     price_per_page
 }) {
-    // just error handling anthe
     try {
         const result = await pool.query(
             `
@@ -22,29 +21,41 @@ export async function insertWriter({
         if (!result.rowCount)
             throw new DatabaseOrServerError();
     }
-    catch (err){
+    catch (err) {
         console.log(err);
         throw new DatabaseOrServerError();
     }
 }
 
 export async function fetchAllWriters() {
-    const result = await pool.query(
-        `
-        SELECT 
-            w.writer_id,
-            w.sample_url,
-            w.price_per_page,
-            w.rating,
-            u.username,
-            u.pfp
+    // are error handling chei ra...
+    // error classes use chei
+    try {
+        const result = await pool.query(
+            `
+            SELECT 
+                w.writer_id,
+                w.sample_url,
+                w.price_per_page,
+                w.rating,
+                u.username,
+                u.pfp
+            FROM writers w
 
-        FROM writers w
+            JOIN users u
+            ON
+                w.writer_id = u.id
 
-        JOIN users u
-        ON w.writer_id = u.id
-        `
-    );
+            ORDER BY w.writer_id
 
-    return result.rows;
+            LIMIT 100;
+            `
+        );
+
+        return result.rows;
+    }
+    catch (err){
+        console.log(err);
+        throw new DatabaseOrServerError();
+    }
 }
