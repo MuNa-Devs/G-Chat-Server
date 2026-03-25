@@ -37,6 +37,7 @@ export async function registerUser({ username, email, password }) {
         if (err.code === '23505')
             throw new DuplicateUser() // duplicate user
 
+        console.error("Unexpected error in registerUser:", err);
         throw new DatabaseOrServerError() // other error
     }
 }
