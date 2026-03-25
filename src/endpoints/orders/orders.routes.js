@@ -4,7 +4,9 @@ import { authorizeToken } from "../auth/auth.middleware.js";
 import {
     createWriter,
     getAllWriters,
-    handleGetAWriter
+    handleGetAWriter,
+    handleUpdateWriter,
+    handleWriterAvailability
 } from "./orders.controller.js";
 
 import {
@@ -20,6 +22,13 @@ orders_router.post(
     authorizeToken,
     validateCre_writerMemo,
     createWriter
+);
+
+orders_router.post(
+    "/writer/update",
+    authorizeToken,
+    validateCre_writerMemo,
+    handleUpdateWriter
 );
 
 // are error handling chei ra...
@@ -38,6 +47,13 @@ orders_router.get(
     authorizeToken,
     verifyWriter,
     handleGetAWriter
+);
+
+orders_router.post(
+    "/writer/available",
+    authorizeToken,
+    verifyWriter,
+    handleWriterAvailability
 );
 
 export default orders_router;
