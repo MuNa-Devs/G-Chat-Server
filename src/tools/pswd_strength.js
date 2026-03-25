@@ -48,7 +48,7 @@ function layer1(password){
 function layer2(password){
     const score = zxcvbn(password).score;
 
-    if (score < 3){
+    if (score < 2){
         return {
             ok: false,
             error: LowEntropyPassword
