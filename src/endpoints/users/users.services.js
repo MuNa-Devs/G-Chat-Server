@@ -132,7 +132,7 @@ export async function searchUsers(user_id, search_query) {
     }
 }
 
-export async function searchFriends(user_id, search_query, last_seen_id){
+export async function searchFriends(user_id, search_query, last_seen_id) {
     try {
         const search_string = `${search_query}%`;
 
@@ -219,36 +219,40 @@ export async function sendFrndReq(sender, receiver) {
             [sender, receiver]
         );
 
+        let result = null;
+
         if (frnd_res.rowCount !== 0) {
             console.log("friend req from receiver already exists. Adding to friends");
             await db_instance.query('COMMIT');
         }
 
-        const result = await db_instance.query(
-            `
-            INSERT INTO friend_requests
-                (sender, receiver)
+        else {
+            result = await db_instance.query(
+                `
+                INSERT INTO friend_requests
+                    (sender, receiver)
 
-            SELECT $1, $2
+                SELECT $1, $2
 
-            WHERE NOT EXISTS (
-                SELECT fr.request_id
-                FROM friend_requests fr
+                WHERE NOT EXISTS (
+                    SELECT fr.request_id
+                    FROM friend_requests fr
 
-                WHERE (
-                    fr.sender = $1
-                    AND
-                    fr.receiver = $2
+                    WHERE (
+                        fr.sender = $1
+                        AND
+                        fr.receiver = $2
+                    )
                 )
-            )
 
-            RETURNING request_id;
-            `,
-            [sender, receiver]
-        );
+                RETURNING request_id;
+                `,
+                [sender, receiver]
+            );
 
-        if (!result.rowCount)
-            throw new FrndReqTransactionFailed();
+            if (!result.rowCount)
+                throw new FrndReqTransactionFailed();
+        }
 
         await db_instance.query('COMMIT');
 
@@ -496,8 +500,8 @@ export async function removeFriend(friend_id, user_id) {
     }
 }
 
-export async function getRecentFriends(user_id){
-    try{
+export async function getRecentFriends(user_id) {
+    try {
         const result = await pool.query(
             `
             SELECT
@@ -525,7 +529,7 @@ export async function getRecentFriends(user_id){
 
         return result.rows;
     }
-    catch (err){
+    catch (err) {
         console.error("Unexpected DB error for user", user_id, err);
         throw new DatabaseOrServerError();
     }

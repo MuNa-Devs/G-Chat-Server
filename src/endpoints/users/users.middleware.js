@@ -65,7 +65,7 @@ export function checkFrndReqParams(req, res, next) {
             if (data.senderId < 1 || data.receiverId < 1)
                 throw new InvalidData();
 
-            if (data.senderId !== user_id)
+            if (data.senderId != user_id)
                 throw new ForbiddenAccess();
 
             break;
