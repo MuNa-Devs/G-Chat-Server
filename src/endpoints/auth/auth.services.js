@@ -4,40 +4,51 @@ import {
     DatabaseOrServerError,
     DBIntegrityError,
     DuplicateUser,
+    InvalidOTP,
     InvalidUser,
+    OTPNotFound,
     RegistrationFailed
 } from '../../error_classes/defined_errors.js';
 
 export async function registerUser({ username, email, password }) {
-    let pswd_hashed;
-
-    // Hash password
     try {
-        pswd_hashed = await bcrypt.hash(password, 10)
-    }
-    catch (err) {
-        throw new RegistrationFailed()
-    }
+        const pswd_hashed = await bcrypt.hash(password, 10);
 
-    // Save user details
-    try {
         const result = await pool.query(
             `
             INSERT INTO users (username, email, password)
             VALUES
                 ($1, $2, $3)
-            RETURNING id
+
+            ON CONFLICT (email)
+            DO
+                UPDATE
+                SET
+                    username = EXCLUDED.username,
+                    password = EXCLUDED.password,
+                    is_verified = false
+
+                WHERE users.is_verified = false
+            
+            RETURNING id, email;
         `,
             [username, email, pswd_hashed]
         );
 
+        if (!result.rowCount)
+            throw new DuplicateUser() // duplicate user
+
         return result.rows[0];
     }
     catch (err) {
-        if (err.code === '23505')
-            throw new DuplicateUser() // duplicate user
-
         console.error("Unexpected error in registerUser:", err);
+
+        if (err.code === '23505')
+            console.log(err);
+
+        if (err.is_expected)
+            throw err;
+
         throw new DatabaseOrServerError() // other error
     }
 }
@@ -52,7 +63,11 @@ export async function authorizeUser({ email, password }) {
                 u.password
             FROM users u
             
-            WHERE u.email = $1;
+            WHERE (
+                u.email = $1
+                AND
+                u.is_verified = true
+            );
             `,
             [email]
         );
@@ -82,58 +97,100 @@ export async function authorizeUser({ email, password }) {
 }
 
 export const verifyOtpService = async (email, otp) => {
+    const db_instance = await pool.connect();
 
-    const result = await pool.query(
-        "SELECT otp FROM users WHERE email = $1",
-        [email]
-    );
+    try{
+        await db_instance.query('BEGIN');
 
-    if (result.rows.length === 0) {
-        throw new Error("User not found");
-    }
-
-    const user = result.rows[0];
-
-    if (user.verification_otp !== otp) {
-        throw new Error("Invalid OTP");
-    }
-
-    if (new Date(user.otp_expiry) < new Date()) {
-        throw new Error("OTP expired");
-    }
-
-    await pool.query(
-        `UPDATE users
-     SET is_verified = true,
-         verification_otp = NULL,
-         otp_expiry = NULL
-     WHERE email = $1`,
-        [email]
-    );
-
-    return { message: "Email verified successfully!" };
-};
-
-export async function storeOtp(otp, expiry, email) {
-    try {
-        const result = await pool.query(
+        const otp_res = await db_instance.query(
             `
-            UPDATE users 
-            SET 
-                otp = $1,
-                otp_expiry = $2
-            
-            WHERE email = $3
-            RETURNING id;
+            SELECT otp
+            FROM otp
+
+            WHERE (
+                email = $1
+                AND
+                expires_at > NOW()
+            )
+
+            FOR UPDATE;
             `,
-            [otp, expiry, email]
+            [email]
         );
 
-        if (result.rowCount === 0) {
-            throw new InvalidUser();
-        }
+        if (!otp_res.rowCount)
+            throw new OTPNotFound();
 
-        return result.rows[0];
+        const otp_val = otp_res.rows[0].otp;
+
+        if (!await bcrypt.compare(String(otp), otp_val))
+            throw new InvalidOTP();
+
+        await db_instance.query(
+            `
+            DELETE FROM otp
+            WHERE email = $1;
+            `,
+            [email]
+        );
+
+        const result = await db_instance.query(
+            `
+            UPDATE users
+            SET
+                is_verified = true
+            
+            WHERE email = $1
+
+            RETURNING 1;
+            `,
+            [email]
+        );
+
+        if (result.rowCount){
+            await db_instance.query('COMMIT');
+            return true;
+        }
+        else{
+            throw new DBIntegrityError();
+        }
+    }
+    catch (err){
+        console.error(err);
+        await db_instance.query('ROLLBACK');
+
+        if (err.is_expected) throw err;
+
+        throw new DatabaseOrServerError();
+    }
+    finally{
+        db_instance.release();
+    }
+};
+
+export async function storeOtp(otp, email) {
+    try {
+        const otp_hashed = await bcrypt.hash(String(otp), 10);
+
+        const result = await pool.query(
+            `
+            INSERT INTO otp
+                (email, otp, expires_at)
+            
+            VALUES
+                ($1, $2, NOW() + INTERVAL '5 minutes')
+
+            ON CONFLICT (email)
+            DO
+                UPDATE
+                SET
+                    otp = EXCLUDED.otp,
+                    expires_at = EXCLUDED.expires_at;
+            `,
+            [email, otp_hashed]
+        );
+
+        return true;
     }
     catch (err) {
         console.error("Unexpected DB error for user", email, err);

@@ -121,9 +121,9 @@ export class RegistrationFailed extends AppError {
     }
 }
 
-export class FrndReqTransactionFailed extends AppError{
+export class FrndReqTransactionFailed extends AppError {
 
-    constructor(){
+    constructor() {
         super(
             "Friend request transaction failed",
             500,
@@ -165,9 +165,9 @@ export class InvalidUser extends AppError {
     }
 }
 
-export class NotFound extends AppError{
+export class NotFound extends AppError {
 
-    constructor(){
+    constructor() {
         super(
             "Data not found or corrupted",
             404,
@@ -187,9 +187,31 @@ export class UnAuthorized extends AppError {
     }
 }
 
-export class ForbiddenAccess extends AppError{
+export class InvalidOTP extends AppError {
 
-    constructor(){
+    constructor() {
+        super(
+            "OTP is expired or incorrect",
+            400,
+            "INVALID_OTP"
+        );
+    }
+}
+
+export class OTPNotFound extends AppError{
+
+    constructor() {
+        super(
+            "OTP not found",
+            404,
+            "OTP_NOT_FOUND"
+        )
+    }
+}
+
+export class ForbiddenAccess extends AppError {
+
+    constructor() {
         super(
             "Access is restricted",
             403,
@@ -198,9 +220,9 @@ export class ForbiddenAccess extends AppError{
     }
 }
 
-export class RoomSizeExceeded extends AppError{
+export class RoomSizeExceeded extends AppError {
 
-    constructor(){
+    constructor() {
         super(
             "Room is full",
             409,

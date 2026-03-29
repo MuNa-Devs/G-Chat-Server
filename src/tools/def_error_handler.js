@@ -1,5 +1,6 @@
 
 export function globalErrHandler(err, req, res, next){
+    console.error("Unexpected error:", err);
 
     if (err.is_expected){
         return res.status(err.status_code).json({
@@ -8,8 +9,6 @@ export function globalErrHandler(err, req, res, next){
             message: err.message
         });
     }
-
-    console.error("Unexpected error:", err);
 
     res.status(500).json({
         success: false,
