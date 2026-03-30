@@ -99,7 +99,7 @@ export function checkCreateContactParams(req, res, next) {
 
     if (user_id !== req.requesting_user.id)
         throw new ForbiddenAccess();
-
+    
     req.user_id = user_id;
     req.friend_id = friend_id;
 

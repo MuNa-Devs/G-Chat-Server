@@ -13,25 +13,24 @@ export async function getUser(user_id, req_user_id) {
         const result = await pool.query(
             `
             SELECT
-                u.id, 
+                u.id,
                 u.username,
-                u.pfp, 
+                u.pfp,
                 u.department,
                 u.about,
                 u.phone,
                 u.personal_email,
-                EXISTS (
-                    SELECT
-                        f.friend_id
-                    FROM friends f
+                f.friend_id,
+                (f.friend_id IS NOT NULL) AS is_friend
 
-                    WHERE (
-                        f.user1 = LEAST($2, u.id)
-                        AND
-                        f.user2 = GREATEST($2, u.id)
-                    )
-                ) AS is_friend
             FROM users u
+
+            LEFT JOIN friends f
+            ON (
+                f.user1 = LEAST($2, u.id)
+                AND
+                f.user2 = GREATEST($2, u.id)
+            )
 
             WHERE u.id = $1;
             `,
